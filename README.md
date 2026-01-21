@@ -267,6 +267,7 @@ bio-stabilizing-lunar-spray/
 ├── requirements.txt              # Python dependencies for installation and execution
 ├── setup.py                      # Package configuration and installation metadata
 ├── integrated_simulation.py      # End-to-end mission simulation entry point
+├── CITATION.cff                  # Citation metadata for academic referencing
 │
 ├── docs/                         # Formal project documentation
 │   ├── API.md                    # Public API and module-level reference
