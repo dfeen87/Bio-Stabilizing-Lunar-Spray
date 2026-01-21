@@ -293,7 +293,8 @@ bio-stabilizing-lunar-spray/
     └── test_benchmarks.py        # Performance and regression benchmarks
 
 ```
-
+> This repository intentionally contains only the validated core implementation, automated tests, and formal documentation to preserve determinism, auditability, and
+review clarity.
 ---
 
 ## 📚 Documentation
