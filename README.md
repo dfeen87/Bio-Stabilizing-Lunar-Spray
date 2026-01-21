@@ -261,33 +261,36 @@ CO(NH₂)₂·H₃PO₄ → NH₄⁺ + NO₃⁻
 ```
 bio-stabilizing-lunar-spray/
 │
-├── README.md                  # Project overview, scope, and usage instructions
-├── LICENSE                    # Open-source license (MIT)
-├── .gitignore                 # Git ignore rules for local and generated files
+├── README.md                     # Project overview, scope, and usage instructions
+├── LICENSE                       # Open-source license (MIT)
+├── .gitignore                    # Git ignore rules for local and generated files
+├── requirements.txt              # Python dependencies for installation and execution
+├── setup.py                      # Package configuration and installation metadata
+├── integrated_simulation.py      # End-to-end mission simulation entry point
 │
-├── docs/                      # Formal project documentation
-│   ├── API.md                 # Public API and module-level reference
-│   ├── CHEMISTRY.md           # Chemical formulations and material science background
-│   ├── DEPLOYMENT.md          # Execution, deployment, and runtime guidance
-│   └── white_paper.md         # Research white paper describing theory and system design
+├── docs/                         # Formal project documentation
+│   ├── API.md                    # Public API and module-level reference
+│   ├── CHEMISTRY.md              # Chemical formulations and material science background
+│   ├── DEPLOYMENT.md             # Execution, deployment, and runtime guidance
+│   └── white_paper.md            # Research white paper describing theory and system design
 │
-├── src/                       # Core implementation
-│   ├── __init__.py            # Package initialization
-│   ├── spray_dynamics.py      # Radial spray expansion and surface coverage modeling
-│   ├── curing_simulation.py   # Temperature-dependent curing and solidification dynamics
-│   ├── nutrient_release.py   # Nutrient release kinetics and biological transition modeling
-│   ├── environmental_control.py # Environmental regulation and control logic
-│   └── utils.py               # Shared utilities, constants, and helper functions
+├── src/                          # Core implementation
+│   ├── __init__.py               # Package initialization
+│   ├── spray_dynamics.py         # Radial spray expansion and surface coverage modeling
+│   ├── curing_simulation.py      # Temperature-dependent curing and solidification dynamics
+│   ├── nutrient_release.py       # Nutrient release kinetics and biological transition modeling
+│   ├── environmental_control.py  # Environmental regulation and control logic
+│   └── utils.py                  # Shared utilities, constants, and helper functions
 │
-└── tests/                     # Automated test suite
-    ├── __init__.py            # Test package initialization
-    ├── conftest.py            # Shared pytest fixtures and configuration
-    ├── test_spray_dynamics.py # Unit tests for spray expansion logic
-    ├── test_curing.py         # Unit tests for curing and thermal behavior
-    ├── test_nutrients.py      # Unit tests for nutrient release dynamics
-    ├── test_utils.py          # Unit tests for shared utilities
-    ├── test_integration.py    # End-to-end system integration tests
-    └── test_benchmarks.py     # Performance and regression benchmarks
+└── tests/                        # Automated test suite
+    ├── __init__.py               # Test package initialization
+    ├── conftest.py               # Shared pytest fixtures and configuration
+    ├── test_spray_dynamics.py    # Unit tests for spray expansion logic
+    ├── test_curing.py            # Unit tests for curing and thermal behavior
+    ├── test_nutrients.py         # Unit tests for nutrient release dynamics
+    ├── test_utils.py             # Unit tests for shared utilities
+    ├── test_integration.py       # End-to-end system integration tests
+    └── test_benchmarks.py        # Performance and regression benchmarks
 
 ```
 
