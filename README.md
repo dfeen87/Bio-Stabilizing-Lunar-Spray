@@ -260,36 +260,35 @@ CO(NH₂)₂·H₃PO₄ → NH₄⁺ + NO₃⁻
 
 ```
 bio-stabilizing-lunar-spray/
-├── src/
-│   ├── spray_dynamics.py          # Radial expansion modeling
-│   ├── curing_simulation.py       # Temperature-dependent hardening
-│   ├── nutrient_release.py        # Biological transition tracking
-│   ├── environmental_control.py   # AI-regulated dome systems
-│   └── utils.py                   # Shared utilities
-├── tests/
-│   ├── test_spray_dynamics.py
-│   ├── test_curing.py
-│   └── test_nutrients.py
-├── data/
-│   ├── jsc1a_properties.json      # Lunar regolith simulant data
-│   ├── experimental_results.csv
-│   └── thermal_cycles.json
-├── docs/
-│   ├── API.md                     # API documentation
-│   ├── DEPLOYMENT.md              # Deployment guide
-│   ├── CHEMISTRY.md               # Detailed chemistry
-│   └── white_paper.pdf            # Original research paper
-├── notebooks/
-│   ├── spray_analysis.ipynb
-│   └── performance_viz.ipynb
-├── examples/
-│   ├── basic_simulation.py
-│   └── dome_integration.py
-├── integrated_simulation.py       # Complete mission simulator
-├── requirements.txt
-├── setup.py
-├── LICENSE
-└── README.md
+│
+├── README.md                  # Project overview, scope, and usage instructions
+├── LICENSE                    # Open-source license (MIT)
+├── .gitignore                 # Git ignore rules for local and generated files
+│
+├── docs/                      # Formal project documentation
+│   ├── API.md                 # Public API and module-level reference
+│   ├── CHEMISTRY.md           # Chemical formulations and material science background
+│   ├── DEPLOYMENT.md          # Execution, deployment, and runtime guidance
+│   └── white_paper.md         # Research white paper describing theory and system design
+│
+├── src/                       # Core implementation
+│   ├── __init__.py            # Package initialization
+│   ├── spray_dynamics.py      # Radial spray expansion and surface coverage modeling
+│   ├── curing_simulation.py   # Temperature-dependent curing and solidification dynamics
+│   ├── nutrient_release.py   # Nutrient release kinetics and biological transition modeling
+│   ├── environmental_control.py # Environmental regulation and control logic
+│   └── utils.py               # Shared utilities, constants, and helper functions
+│
+└── tests/                     # Automated test suite
+    ├── __init__.py            # Test package initialization
+    ├── conftest.py            # Shared pytest fixtures and configuration
+    ├── test_spray_dynamics.py # Unit tests for spray expansion logic
+    ├── test_curing.py         # Unit tests for curing and thermal behavior
+    ├── test_nutrients.py      # Unit tests for nutrient release dynamics
+    ├── test_utils.py          # Unit tests for shared utilities
+    ├── test_integration.py    # End-to-end system integration tests
+    └── test_benchmarks.py     # Performance and regression benchmarks
+
 ```
 
 ---
