@@ -1,0 +1,46 @@
+# Bio-Stabilizing Lunar Spray - Python Dependencies
+# Author: Don Michael Feeney Jr
+# Python 3.8+
+
+# Core scientific computing
+numpy>=1.21.0,<2.0.0
+scipy>=1.7.0,<2.0.0
+
+# Data visualization
+matplotlib>=3.4.0,<4.0.0
+seaborn>=0.11.0,<1.0.0
+
+# Data manipulation
+pandas>=1.3.0,<2.0.0
+
+# Development and testing
+pytest>=7.0.0,<8.0.0
+pytest-cov>=3.0.0,<4.0.0
+black>=22.0.0,<23.0.0
+flake8>=4.0.0,<5.0.0
+mypy>=0.950,<1.0.0
+
+# Documentation
+sphinx>=4.5.0,<5.0.0
+sphinx-rtd-theme>=1.0.0,<2.0.0
+
+# Jupyter notebooks (for analysis)
+jupyter>=1.0.0,<2.0.0
+ipython>=8.0.0,<9.0.0
+notebook>=6.4.0,<7.0.0
+
+# Optional: Advanced visualization
+plotly>=5.0.0,<6.0.0  # Interactive 3D plots
+ipywidgets>=7.6.0,<8.0.0  # Interactive controls
+
+# Optional: Machine learning (for optimization)
+scikit-learn>=1.0.0,<2.0.0
+
+# Optional: Export to different formats
+openpyxl>=3.0.0,<4.0.0  # Excel export
+reportlab>=3.6.0,<4.0.0  # PDF reports
+
+# Build and packaging
+setuptools>=60.0.0
+wheel>=0.37.0
+twine>=3.8.0
