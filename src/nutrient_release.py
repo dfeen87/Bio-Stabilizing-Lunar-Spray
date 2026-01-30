@@ -214,7 +214,10 @@ class NutrientReleaseSimulator:
         # Calcium released alongside phosphate
         p = self.calculate_phosphorus_release(day)
         # Stoichiometric ratio from Ca3(PO4)2
-        return p * 1.2
+        if self.water_factor == 0:
+            return 0.0
+        adjusted_p = p / self.water_factor
+        return min(adjusted_p * 1.2, self.CA_MAX) * self.water_factor
     
     def calculate_ph(self, day: float) -> float:
         """
@@ -314,6 +317,10 @@ class NutrientReleaseSimulator:
             requirements = PlantRequirements()
         
         ready_day = None
+        first_n_day = None
+        first_p_day = None
+        first_k_day = None
+        first_ph_day = None
         
         for i, day in enumerate(profile.time_days):
             n_ok = (requirements.nitrogen_min <= profile.concentrations[Nutrient.NITROGEN][i] <= 
@@ -321,17 +328,27 @@ class NutrientReleaseSimulator:
             p_ok = profile.concentrations[Nutrient.PHOSPHORUS][i] >= requirements.phosphorus_min
             k_ok = profile.concentrations[Nutrient.POTASSIUM][i] >= requirements.potassium_min
             ph_ok = requirements.ph_min <= profile.ph_values[i] <= requirements.ph_max
+
+            day_value = int(day)
+            if n_ok and first_n_day is None:
+                first_n_day = day_value
+            if p_ok and first_p_day is None:
+                first_p_day = day_value
+            if k_ok and first_k_day is None:
+                first_k_day = day_value
+            if ph_ok and first_ph_day is None:
+                first_ph_day = day_value
             
             if n_ok and p_ok and k_ok and ph_ok:
-                ready_day = int(day)
+                ready_day = day_value
                 break
         
         status = {
             'ready_day': ready_day,
-            'n_sufficient': day if n_ok else None,
-            'p_sufficient': day if p_ok else None,
-            'k_sufficient': day if k_ok else None,
-            'ph_acceptable': day if ph_ok else None
+            'n_sufficient': first_n_day,
+            'p_sufficient': first_p_day,
+            'k_sufficient': first_k_day,
+            'ph_acceptable': first_ph_day
         }
         
         return ready_day, status
