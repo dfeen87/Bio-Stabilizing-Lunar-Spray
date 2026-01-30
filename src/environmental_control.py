@@ -258,7 +258,7 @@ class AIEnvironmentalController:
             return (control_output, False)
         else:
             # Need cooling
-            return (0.0, control_output < -20)
+            return (0.0, control_output < 0)
     
     def calculate_humidity_control(self, 
                                    current: float, 

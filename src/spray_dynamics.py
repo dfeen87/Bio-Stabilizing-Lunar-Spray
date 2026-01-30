@@ -87,8 +87,9 @@ class SprayDynamics:
         """
         # Base coverage model - assumes radial spreading
         # Volume = π * r² * h, solving for r given target thickness ~1mm
-        base_thickness_mm = 1.0
-        base_radius = np.sqrt(volume_ml / (np.pi * base_thickness_mm))
+        base_thickness_m = 0.001
+        volume_m3 = volume_ml * 1e-6
+        base_radius = np.sqrt(volume_m3 / (np.pi * base_thickness_m))
         
         # Pressure adjustment (higher pressure = better spread)
         pressure_factor = (self.params.pressure_psi / 25.0) ** 0.3
@@ -105,7 +106,7 @@ class SprayDynamics:
         gravity_factor = np.sqrt(self.GRAVITY_EARTH / self.GRAVITY_MOON)
         
         return (base_radius * pressure_factor * temp_factor * 
-                slope_factor * gravity_factor / 100.0)
+                slope_factor * gravity_factor)
     
     def simulate_radial_expansion(self, 
                                   volume_ml: float,
@@ -142,9 +143,11 @@ class SprayDynamics:
         
         # Thickness decreases as radius increases (conservation of volume)
         # Avoid division by zero at t=0
-        thickness = np.where(radius > 0.01, 
-                            volume_ml / (np.pi * radius**2),
-                            volume_ml)  # mm
+        volume_m3 = volume_ml * 1e-6
+        min_radius = 1e-4
+        safe_radius = np.maximum(radius, min_radius)
+        thickness_m = volume_m3 / (np.pi * safe_radius**2)
+        thickness = thickness_m * 1000.0  # mm
         
         coverage_area = np.pi * max_radius ** 2
         
