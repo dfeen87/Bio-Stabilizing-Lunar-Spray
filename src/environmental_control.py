@@ -10,10 +10,9 @@ Based on: Bio-Stabilizing Lunar Spray white paper (April 2025)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
-import json
 
 
 class ControlMode(Enum):
@@ -176,7 +175,7 @@ class AIEnvironmentalController:
         self.co2_controller = PIDController(kp=0.5, ki=0.02, kd=0.1)
         
         # System history for learning
-        self.history: List[DomeState] = []
+        self.history: List[Dict] = []
         
     def sense_environment(self) -> DomeSensors:
         """
@@ -449,7 +448,7 @@ class AIEnvironmentalController:
         sensors.timestamp += dt
         
         # Store history
-        self.history.append(json.loads(json.dumps(self.state.__dict__, default=str)))
+        self.history.append(asdict(self.state))
     
     def run_simulation(self, duration_hours: float = 24.0, dt: float = 60.0):
         """

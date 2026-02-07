@@ -112,11 +112,8 @@ class NutrientReleaseSimulator:
         Returns:
             Potassium concentration in ppm
         """
-        # Sigmoid curve - delayed release as geopolymer breaks down
-        exponent = -self.K_RATE * (day - self.K_DELAY)
-        release_fraction = 1 / (1 + np.exp(exponent))
-        
-        return self.K_MAX * release_fraction * self.water_factor
+        release_fraction = self._potassium_release_fraction(np.array(day))
+        return float(self.K_MAX * release_fraction * self.water_factor)
     
     def calculate_nitrogen_release(self, day: float) -> float:
         """
@@ -131,17 +128,8 @@ class NutrientReleaseSimulator:
         Returns:
             Nitrogen concentration in ppm
         """
-        if day < self.N_TRANSITION_DAY:
-            # Fast initial phase
-            n_fast = day * self.N_FAST_RATE
-        else:
-            # Transition to slow sustained release
-            n_fast = self.N_TRANSITION_DAY * self.N_FAST_RATE
-            n_slow = (day - self.N_TRANSITION_DAY) * self.N_SLOW_RATE
-            
-        total_n = n_fast + (n_slow if day >= self.N_TRANSITION_DAY else 0)
-        
-        return min(total_n, self.N_MAX) * self.water_factor
+        total_n = self._nitrogen_release_total(np.array(day))
+        return float(np.minimum(total_n, self.N_MAX) * self.water_factor)
     
     def calculate_phosphorus_release(self, day: float) -> float:
         """
@@ -156,16 +144,8 @@ class NutrientReleaseSimulator:
         Returns:
             Phosphorus concentration in ppm
         """
-        # Delayed sigmoid - needs organic acids from roots
-        exponent = -self.P_RATE * (day - self.P_DELAY)
-        release_fraction = 1 / (1 + np.exp(exponent))
-        
-        # Additional contribution from urea phosphate (fast)
-        urea_p_contribution = min(day * 5, 50)
-        
-        total_p = self.P_MAX * release_fraction + urea_p_contribution
-        
-        return total_p * self.water_factor
+        total_p = self._phosphorus_release_total(np.array(day))
+        return float(total_p * self.water_factor)
     
     def calculate_magnesium_release(self, day: float) -> float:
         """
@@ -180,12 +160,8 @@ class NutrientReleaseSimulator:
         Returns:
             Magnesium concentration in ppm
         """
-        if day < self.MG_START_DAY:
-            return 0.0
-        
-        mg_released = (day - self.MG_START_DAY) * self.MG_RATE
-        
-        return min(mg_released, self.MG_MAX) * self.water_factor
+        mg_released = self._magnesium_release_total(np.array(day))
+        return float(np.minimum(mg_released, self.MG_MAX) * self.water_factor)
     
     def calculate_sulfur_release(self, day: float) -> float:
         """
@@ -198,8 +174,7 @@ class NutrientReleaseSimulator:
             Sulfur concentration in ppm
         """
         mg = self.calculate_magnesium_release(day)
-        # Sulfate released proportionally with Mg (MgSO4)
-        return mg * 1.6  # Mass ratio S:Mg in MgSO4
+        return mg * 1.6
     
     def calculate_calcium_release(self, day: float) -> float:
         """
@@ -212,12 +187,43 @@ class NutrientReleaseSimulator:
             Calcium concentration in ppm
         """
         # Calcium released alongside phosphate
-        p = self.calculate_phosphorus_release(day)
-        # Stoichiometric ratio from Ca3(PO4)2
         if self.water_factor == 0:
             return 0.0
+        p = self.calculate_phosphorus_release(day)
         adjusted_p = p / self.water_factor
         return min(adjusted_p * 1.2, self.CA_MAX) * self.water_factor
+
+    def _potassium_release_fraction(self, days: np.ndarray) -> np.ndarray:
+        exponent = -self.K_RATE * (days - self.K_DELAY)
+        return 1 / (1 + np.exp(exponent))
+
+    def _nitrogen_release_total(self, days: np.ndarray) -> np.ndarray:
+        fast_phase = np.minimum(days, self.N_TRANSITION_DAY) * self.N_FAST_RATE
+        slow_phase = np.maximum(days - self.N_TRANSITION_DAY, 0) * self.N_SLOW_RATE
+        return fast_phase + slow_phase
+
+    def _phosphorus_release_total(self, days: np.ndarray) -> np.ndarray:
+        exponent = -self.P_RATE * (days - self.P_DELAY)
+        release_fraction = 1 / (1 + np.exp(exponent))
+        urea_p_contribution = np.minimum(days * 5, 50)
+        return self.P_MAX * release_fraction + urea_p_contribution
+
+    def _magnesium_release_total(self, days: np.ndarray) -> np.ndarray:
+        mg_released = np.maximum(days - self.MG_START_DAY, 0) * self.MG_RATE
+        return np.minimum(mg_released, self.MG_MAX)
+
+    def _ph_values(self, days: np.ndarray) -> np.ndarray:
+        final_ph = 6.5
+        decay_rate = 0.05
+        return final_ph + (self.initial_ph - final_ph) * np.exp(-decay_rate * days)
+
+    def _porosity_values(self, days: np.ndarray) -> np.ndarray:
+        initial_porosity = 0.15
+        final_porosity = 0.45
+        transition_day = 25
+        rate = 0.12
+        increase_fraction = 1 / (1 + np.exp(-rate * (days - transition_day)))
+        return initial_porosity + (final_porosity - initial_porosity) * increase_fraction
     
     def calculate_ph(self, day: float) -> float:
         """
@@ -280,18 +286,30 @@ class NutrientReleaseSimulator:
             NutrientProfile with all nutrient concentrations over time
         """
         time = np.linspace(0, duration_days, time_points)
-        
+        water_factor = self.water_factor
+
+        potassium = self.K_MAX * self._potassium_release_fraction(time) * water_factor
+        nitrogen = np.minimum(self._nitrogen_release_total(time), self.N_MAX) * water_factor
+        phosphorus = self._phosphorus_release_total(time) * water_factor
+        magnesium = self._magnesium_release_total(time) * water_factor
+        sulfur = magnesium * 1.6
+        if water_factor == 0:
+            calcium = np.zeros_like(time)
+        else:
+            adjusted_p = phosphorus / water_factor
+            calcium = np.minimum(adjusted_p * 1.2, self.CA_MAX) * water_factor
+
         concentrations = {
-            Nutrient.POTASSIUM: np.array([self.calculate_potassium_release(t) for t in time]),
-            Nutrient.NITROGEN: np.array([self.calculate_nitrogen_release(t) for t in time]),
-            Nutrient.PHOSPHORUS: np.array([self.calculate_phosphorus_release(t) for t in time]),
-            Nutrient.MAGNESIUM: np.array([self.calculate_magnesium_release(t) for t in time]),
-            Nutrient.SULFUR: np.array([self.calculate_sulfur_release(t) for t in time]),
-            Nutrient.CALCIUM: np.array([self.calculate_calcium_release(t) for t in time])
+            Nutrient.POTASSIUM: potassium,
+            Nutrient.NITROGEN: nitrogen,
+            Nutrient.PHOSPHORUS: phosphorus,
+            Nutrient.MAGNESIUM: magnesium,
+            Nutrient.SULFUR: sulfur,
+            Nutrient.CALCIUM: calcium
         }
         
-        ph_values = np.array([self.calculate_ph(t) for t in time])
-        porosity = np.array([self.calculate_porosity(t) for t in time])
+        ph_values = self._ph_values(time)
+        porosity = self._porosity_values(time)
         
         return NutrientProfile(
             time_days=time,
