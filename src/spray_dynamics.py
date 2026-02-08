@@ -86,8 +86,8 @@ class SprayDynamics:
             Maximum radius in meters
         """
         # Base coverage model - assumes radial spreading
-        # Volume = π * r² * h, solving for r given target thickness ~1mm
-        base_thickness_m = 0.001
+        # Volume = π * r² * h, solving for r given target thickness ~0.15mm
+        base_thickness_m = 0.00015
         volume_m3 = volume_ml * 1e-6
         base_radius = np.sqrt(volume_m3 / (np.pi * base_thickness_m))
         
@@ -143,11 +143,9 @@ class SprayDynamics:
         
         # Thickness decreases as radius increases (conservation of volume)
         # Avoid division by zero at t=0
-        volume_m3 = volume_ml * 1e-6
         min_radius = 1e-4
         safe_radius = np.maximum(radius, min_radius)
-        thickness_m = volume_m3 / (np.pi * safe_radius**2)
-        thickness = thickness_m * 1000.0  # mm
+        thickness = (volume_ml * 1000.0) / (np.pi * safe_radius**2)
         
         coverage_area = np.pi * max_radius ** 2
         
