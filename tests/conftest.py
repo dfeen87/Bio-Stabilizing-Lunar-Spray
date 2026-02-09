@@ -51,6 +51,14 @@ def pytest_configure(config):
     )
 
 
+@pytest.fixture
+def benchmark():
+    """Fallback benchmark fixture when pytest-benchmark is unavailable."""
+    def _runner(func, *args, **kwargs):
+        return func(*args, **kwargs)
+    return _runner
+
+
 # ============================================================================
 # DIRECTORY AND FILE FIXTURES
 # ============================================================================

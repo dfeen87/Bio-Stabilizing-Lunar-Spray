@@ -61,6 +61,7 @@ class CuringSimulator:
     UV_ACCELERATION = 0.30  # 30% faster with UV
     ACTIVATION_ENERGY = 45.0  # kJ/mol (typical for geopolymers)
     GAS_CONSTANT = 8.314  # J/(mol·K)
+    MAX_CURE_TIME = 90.0  # minutes (extreme cold ceiling)
     
     def __init__(self, 
                  uv_assisted: bool = False,
@@ -119,8 +120,8 @@ class CuringSimulator:
         al_factor = self.regolith.alumina_content / 14.0
         cure_time /= al_factor
         
-        # Minimum cure time (diffusion-limited)
-        return max(cure_time, 2.0)
+        # Clamp cure time to keep extreme cold reactions progressing
+        return min(max(cure_time, 2.0), self.MAX_CURE_TIME)
     
     def calculate_bond_strength(self, 
                                time_min: float, 
