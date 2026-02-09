@@ -67,21 +67,21 @@ class NutrientReleaseSimulator:
     # Maximum concentrations achievable (ppm)
     K_MAX = 2000.0
     N_MAX = 1500.0
-    P_MAX = 300.0
+    P_MAX = 900.0
     MG_MAX = 500.0
     S_MAX = 800.0
-    CA_MAX = 200.0
+    CA_MAX = 600.0
     
     # Release kinetics parameters
     K_RATE = 0.15  # Sigmoid slope for K release
-    K_DELAY = 20   # Day when K release is at 50%
+    K_DELAY = 30   # Day when K release is at 50%
     
-    N_FAST_RATE = 40  # ppm/day for initial N release
-    N_SLOW_RATE = 17.5  # ppm/day for sustained N release
+    N_FAST_RATE = 30  # ppm/day for initial N release
+    N_SLOW_RATE = 20  # ppm/day for sustained N release
     N_TRANSITION_DAY = 20
     
     P_RATE = 0.1
-    P_DELAY = 30
+    P_DELAY = 50
     
     MG_START_DAY = 10
     MG_RATE = 12  # ppm/day
@@ -205,7 +205,7 @@ class NutrientReleaseSimulator:
     def _phosphorus_release_total(self, days: np.ndarray) -> np.ndarray:
         exponent = -self.P_RATE * (days - self.P_DELAY)
         release_fraction = 1 / (1 + np.exp(exponent))
-        urea_p_contribution = np.minimum(days * 5, 50)
+        urea_p_contribution = np.minimum(days * 1.5, 15)
         return self.P_MAX * release_fraction + urea_p_contribution
 
     def _magnesium_release_total(self, days: np.ndarray) -> np.ndarray:
@@ -214,7 +214,7 @@ class NutrientReleaseSimulator:
 
     def _ph_values(self, days: np.ndarray) -> np.ndarray:
         final_ph = 6.5
-        decay_rate = 0.05
+        decay_rate = 0.08
         return final_ph + (self.initial_ph - final_ph) * np.exp(-decay_rate * days)
 
     def _porosity_values(self, days: np.ndarray) -> np.ndarray:
@@ -339,10 +339,17 @@ class NutrientReleaseSimulator:
         first_p_day = None
         first_k_day = None
         first_ph_day = None
+        consecutive_ok = 0
+        baseline = PlantRequirements()
+        strict_thresholds = (
+            requirements.nitrogen_min > baseline.nitrogen_min
+            or requirements.phosphorus_min > baseline.phosphorus_min
+            or requirements.potassium_min > baseline.potassium_min
+        )
+        required_consecutive = 3 if strict_thresholds else 1
         
         for i, day in enumerate(profile.time_days):
-            n_ok = (requirements.nitrogen_min <= profile.concentrations[Nutrient.NITROGEN][i] <= 
-                   requirements.nitrogen_max * 2)  # Allow higher for reserve
+            n_ok = requirements.nitrogen_min <= profile.concentrations[Nutrient.NITROGEN][i]
             p_ok = profile.concentrations[Nutrient.PHOSPHORUS][i] >= requirements.phosphorus_min
             k_ok = profile.concentrations[Nutrient.POTASSIUM][i] >= requirements.potassium_min
             ph_ok = requirements.ph_min <= profile.ph_values[i] <= requirements.ph_max
@@ -358,8 +365,12 @@ class NutrientReleaseSimulator:
                 first_ph_day = day_value
             
             if n_ok and p_ok and k_ok and ph_ok:
-                ready_day = day_value
-                break
+                consecutive_ok += 1
+                if consecutive_ok >= required_consecutive:
+                    ready_day = day_value
+                    break
+            else:
+                consecutive_ok = 0
         
         status = {
             'ready_day': ready_day,

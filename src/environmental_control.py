@@ -380,10 +380,10 @@ class AIEnvironmentalController:
         )
         
         # Calculate energy consumption
-        energy = (heater * 5.0 +  # Heater: up to 500W
-                 (100 if cooler else 0) +  # Cooler: 100W
-                 led_power * 2.0 +  # LEDs: up to 200W
-                 fan_speed * 0.05)  # Fan: ~100W at max
+        energy = (heater * 2.0 +  # Heater: up to 200W
+                 (60 if cooler else 0) +  # Cooler: 60W
+                 led_power * 1.0 +  # LEDs: up to 100W
+                 fan_speed * 0.02)  # Fan: ~40W at max
         
         self.state.actions = actions
         self.state.energy_consumption_w = energy
@@ -528,7 +528,7 @@ class AIEnvironmentalController:
         ax4.set_title('Energy Consumption')
         ax4.grid(True, alpha=0.3)
         
-        total_energy_kwh = np.trapz(energy, times)
+        total_energy_kwh = np.trapz(energy, times) / 1000
         ax4.text(0.5, 0.95, f'Total: {total_energy_kwh:.2f} kWh', 
                 transform=ax4.transAxes, ha='center', va='top',
                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))

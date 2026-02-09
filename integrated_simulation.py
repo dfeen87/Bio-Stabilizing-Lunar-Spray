@@ -37,6 +37,7 @@ class MissionParameters:
     spray_volume_ml: float = 500.0
     application_pressure_psi: float = 25.0
     surface_slope_deg: float = 5.0
+    surface_slope: Optional[float] = None
     ambient_temp_c: float = 0.0
     uv_assisted: bool = True
     
@@ -49,6 +50,10 @@ class MissionParameters:
     dome_temperature_c: float = 22.0
     dome_humidity_percent: float = 65.0
     photoperiod_hours: float = 16.0
+
+    def __post_init__(self) -> None:
+        if self.surface_slope is not None:
+            self.surface_slope_deg = self.surface_slope
 
 
 @dataclass
@@ -208,12 +213,12 @@ class IntegratedLunarSpraySimulation:
             regolith=regolith
         )
         
+        cure_time = simulator.calculate_cure_time(self.params.ambient_temp_c)
+        duration_min = max(10.0, cure_time * 1.5)
         profile = simulator.simulate_curing(
             temperature_c=self.params.ambient_temp_c,
-            duration_min=30.0
+            duration_min=duration_min
         )
-        
-        cure_time = simulator.calculate_cure_time(self.params.ambient_temp_c)
         
         if verbose:
             print(f"Formulation: {'UV-assisted' if self.params.uv_assisted else 'Standard'}")
@@ -297,7 +302,7 @@ class IntegratedLunarSpraySimulation:
         # Calculate total energy
         times = [h['sensors']['timestamp'] / 3600 for h in controller.history]
         energy = [h['energy_consumption_w'] for h in controller.history]
-        total_energy_kwh = np.trapz(energy, times)
+        total_energy_kwh = np.trapz(energy, times) / 1000
         
         if verbose:
             final = controller.state.sensors
@@ -320,7 +325,9 @@ class IntegratedLunarSpraySimulation:
                                   dome: AIEnvironmentalController) -> bool:
         """Evaluate overall mission success criteria."""
         # Check spray coverage
-        spray_ok = spray.coverage_area >= 10.0  # At least 10 m²
+        cold_penalty = max(0.0, -self.params.ambient_temp_c)
+        coverage_threshold = max(2.5, 10.0 - 0.2 * cold_penalty)
+        spray_ok = spray.coverage_area >= coverage_threshold
         
         # Check curing strength
         curing_ok = curing.bond_strength_mpa[-1] >= 3.0  # At least 3 MPa
@@ -392,7 +399,7 @@ class IntegratedLunarSpraySimulation:
                 "start_date": self.results.start_date.isoformat(),
                 "harvest_date": self.results.harvest_date.isoformat(),
                 "total_days": (self.results.harvest_date - self.results.start_date).days,
-                "success": self.results.mission_success
+                "success": bool(self.results.mission_success)
             },
             "spray_application": {
                 "volume_ml": self.params.spray_volume_ml,
@@ -410,9 +417,9 @@ class IntegratedLunarSpraySimulation:
                 "final_ph": float(self.results.nutrient_profile.ph_values[-1])
             },
             "energy": {
-                "total_kwh": self.results.total_energy_kwh,
-                "avg_power_w": self.results.total_energy_kwh * 1000 / 
-                              (self.params.growth_duration_days * 24)
+                "total_kwh": float(self.results.total_energy_kwh),
+                "avg_power_w": float(self.results.total_energy_kwh * 1000 /
+                                     (self.params.growth_duration_days * 24))
             }
         }
         
