@@ -171,7 +171,15 @@ class AIEnvironmentalController:
         # Initialize PID controllers
         self.temp_controller = PIDController(kp=2.0, ki=0.1, kd=0.5, 
                                             output_min=-100, output_max=100)
-        self.humidity_controller = PIDController(kp=1.5, ki=0.05, kd=0.3)
+        # Humidity control must support both humidification (positive output)
+        # and dehumidification (negative output for venting).
+        self.humidity_controller = PIDController(
+            kp=1.5,
+            ki=0.05,
+            kd=0.3,
+            output_min=-100,
+            output_max=100,
+        )
         self.co2_controller = PIDController(kp=0.5, ki=0.02, kd=0.1)
         
         # System history for learning
