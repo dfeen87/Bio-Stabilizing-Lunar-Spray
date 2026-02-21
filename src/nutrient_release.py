@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
-from utils import NutrientConstants
+from .utils import NutrientConstants
 
 
 class Nutrient(Enum):

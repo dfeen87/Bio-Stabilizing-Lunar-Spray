@@ -12,7 +12,7 @@ import numpy as np
 from typing import Tuple, Dict, Optional
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from utils import SprayConstants, PhysicalConstants, validate_pressure
+from .utils import SprayConstants, PhysicalConstants, validate_pressure
 
 
 @dataclass

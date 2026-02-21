@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 from enum import Enum
-from utils import CuringConstants, PhysicalConstants
+from .utils import CuringConstants, PhysicalConstants
 
 
 class CuringPhase(Enum):
@@ -253,7 +253,7 @@ class CuringSimulator:
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
-        colors = plt.cm.viridis(np.linspace(0, 1, len(profiles)))
+        colors = plt.get_cmap("viridis")(np.linspace(0, 1, len(profiles)))
 
         # Cure fraction vs time
         for profile, label, color in zip(profiles, labels, colors):
@@ -343,22 +343,43 @@ def analyze_phase_transitions():
     print("=" * 70)
 
     for temp in temps:
-        profile = sim.simulate_curing(temp, duration_min=40)
-
-        # Find transition points
-        initial_end = np.where(profile.cure_fraction >= 0.15)[0][0]
-        setting_end = np.where(profile.cure_fraction >= 0.5)[0][0]
-        hardening_end = np.where(profile.cure_fraction >= 0.95)[0][0]
+        # Extend duration to ensure curing completes even at low temperatures
+        profile = sim.simulate_curing(temp, duration_min=120)
 
         print(f"\nTemperature: {temp}°C")
-        print(f"  Initial gelation:      0.0 - {profile.time[initial_end]:.1f} min")
-        print(
-            f"  Primary setting:       {profile.time[initial_end]:.1f} - {profile.time[setting_end]:.1f} min"
-        )
-        print(
-            f"  Strength development:  {profile.time[setting_end]:.1f} - {profile.time[hardening_end]:.1f} min"
-        )
-        print(f"  Mature (95%+):         {profile.time[hardening_end]:.1f} min+")
+
+        # Find transition points with safety checks
+        initial_indices = np.where(profile.cure_fraction >= 0.15)[0]
+        setting_indices = np.where(profile.cure_fraction >= 0.5)[0]
+        hardening_indices = np.where(profile.cure_fraction >= 0.95)[0]
+
+        if len(initial_indices) > 0:
+            initial_end_time = profile.time[initial_indices[0]]
+            print(f"  Initial gelation:      0.0 - {initial_end_time:.1f} min")
+
+            if len(setting_indices) > 0:
+                setting_end_time = profile.time[setting_indices[0]]
+                print(
+                    f"  Primary setting:       {initial_end_time:.1f} - {setting_end_time:.1f} min"
+                )
+
+                if len(hardening_indices) > 0:
+                    hardening_end_time = profile.time[hardening_indices[0]]
+                    print(
+                        f"  Strength development:  {setting_end_time:.1f} - {hardening_end_time:.1f} min"
+                    )
+                    print(f"  Mature (95%+):         {hardening_end_time:.1f} min+")
+                else:
+                    print(
+                        f"  Strength development:  {setting_end_time:.1f} - (not completed)"
+                    )
+            else:
+                print(
+                    f"  Primary setting:       {initial_end_time:.1f} - (not completed)"
+                )
+        else:
+            print("  Initial gelation:      (not started)")
+
         print(f"  Final strength:        {profile.bond_strength_mpa[-1]:.2f} MPa")
 
 

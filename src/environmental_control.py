@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
-from utils import PhysicalConstants
+from .utils import PhysicalConstants
 
 
 class ControlMode(Enum):

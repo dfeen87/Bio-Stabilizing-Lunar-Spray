@@ -19,10 +19,10 @@ from dataclasses import dataclass
 import json
 
 # Import all simulation modules
-from spray_dynamics import SprayDynamics, SprayParameters, SprayResults
-from curing_simulation import CuringSimulator, CuringProfile, RegolithProperties
-from nutrient_release import NutrientReleaseSimulator, NutrientProfile, PlantRequirements, Nutrient
-from environmental_control import AIEnvironmentalController, DomeState, ControlMode
+from src.spray_dynamics import SprayDynamics, SprayParameters, SprayResults
+from src.curing_simulation import CuringSimulator, CuringProfile, RegolithProperties
+from src.nutrient_release import NutrientReleaseSimulator, NutrientProfile, PlantRequirements, Nutrient
+from src.environmental_control import AIEnvironmentalController, DomeState, ControlMode
 
 
 @dataclass

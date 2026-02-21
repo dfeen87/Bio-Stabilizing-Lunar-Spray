@@ -17,17 +17,14 @@ import numpy as np
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SRC_PATH = PROJECT_ROOT / "src"
-if str(SRC_PATH) not in sys.path:
-    sys.path.insert(0, str(SRC_PATH))
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 # Import all modules for fixtures
-from spray_dynamics import SprayDynamics, SprayParameters
-from curing_simulation import CuringSimulator, RegolithProperties
-from nutrient_release import NutrientReleaseSimulator, PlantRequirements
-from environmental_control import AIEnvironmentalController, EnvironmentalSetpoints
+from src.spray_dynamics import SprayDynamics, SprayParameters
+from src.curing_simulation import CuringSimulator, RegolithProperties
+from src.nutrient_release import NutrientReleaseSimulator, PlantRequirements
+from src.environmental_control import AIEnvironmentalController, EnvironmentalSetpoints
 from integrated_simulation import IntegratedLunarSpraySimulation, MissionParameters
 
 # ============================================================================
