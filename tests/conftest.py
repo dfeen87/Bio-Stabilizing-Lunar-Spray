@@ -30,32 +30,27 @@ from nutrient_release import NutrientReleaseSimulator, PlantRequirements
 from environmental_control import AIEnvironmentalController, EnvironmentalSetpoints
 from integrated_simulation import IntegratedLunarSpraySimulation, MissionParameters
 
-
 # ============================================================================
 # PYTEST CONFIGURATION
 # ============================================================================
+
 
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
     config.addinivalue_line(
         "markers", "benchmark: marks tests as performance benchmarks"
     )
 
 
-
-
 # ============================================================================
 # DIRECTORY AND FILE FIXTURES
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def test_data_dir():
@@ -86,14 +81,12 @@ def output_dir(temp_dir):
 # SPRAY DYNAMICS FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def spray_params_nominal():
     """Standard spray parameters for nominal conditions."""
     return SprayParameters(
-        pressure_psi=25.0,
-        ambient_temp_c=0.0,
-        surface_slope=0.0,
-        viscosity_cp=3000.0
+        pressure_psi=25.0, ambient_temp_c=0.0, surface_slope=0.0, viscosity_cp=3000.0
     )
 
 
@@ -101,10 +94,7 @@ def spray_params_nominal():
 def spray_params_cold():
     """Spray parameters for cold lunar conditions."""
     return SprayParameters(
-        pressure_psi=25.0,
-        ambient_temp_c=-50.0,
-        surface_slope=0.0,
-        viscosity_cp=3000.0
+        pressure_psi=25.0, ambient_temp_c=-50.0, surface_slope=0.0, viscosity_cp=3000.0
     )
 
 
@@ -112,10 +102,7 @@ def spray_params_cold():
 def spray_params_sloped():
     """Spray parameters for sloped terrain."""
     return SprayParameters(
-        pressure_psi=25.0,
-        ambient_temp_c=0.0,
-        surface_slope=10.0,
-        viscosity_cp=3000.0
+        pressure_psi=25.0, ambient_temp_c=0.0, surface_slope=10.0, viscosity_cp=3000.0
     )
 
 
@@ -134,6 +121,7 @@ def spray_results_500ml(spray_simulator):
 # ============================================================================
 # CURING SIMULATION FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def regolith_jsc1a():
@@ -163,8 +151,7 @@ def curing_simulator_uv():
 def curing_profile_nominal(curing_simulator_standard):
     """Pre-computed curing profile at 0°C."""
     return curing_simulator_standard.simulate_curing(
-        temperature_c=0.0,
-        duration_min=30.0
+        temperature_c=0.0, duration_min=30.0
     )
 
 
@@ -172,22 +159,17 @@ def curing_profile_nominal(curing_simulator_standard):
 # NUTRIENT RELEASE FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def nutrient_simulator():
     """Standard nutrient release simulator."""
-    return NutrientReleaseSimulator(
-        initial_ph=10.0,
-        water_availability=1.0
-    )
+    return NutrientReleaseSimulator(initial_ph=10.0, water_availability=1.0)
 
 
 @pytest.fixture
 def nutrient_simulator_limited_water():
     """Nutrient simulator with limited water."""
-    return NutrientReleaseSimulator(
-        initial_ph=10.0,
-        water_availability=0.6
-    )
+    return NutrientReleaseSimulator(initial_ph=10.0, water_availability=0.6)
 
 
 @pytest.fixture
@@ -200,9 +182,7 @@ def plant_requirements_standard():
 def plant_requirements_strict():
     """Strict plant nutrient requirements."""
     return PlantRequirements(
-        nitrogen_min=150.0,
-        phosphorus_min=50.0,
-        potassium_min=200.0
+        nitrogen_min=150.0, phosphorus_min=50.0, potassium_min=200.0
     )
 
 
@@ -216,14 +196,12 @@ def nutrient_profile_60day(nutrient_simulator):
 # ENVIRONMENTAL CONTROL FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def environmental_setpoints():
     """Standard environmental setpoints."""
     return EnvironmentalSetpoints(
-        temperature_c=22.0,
-        humidity_percent=65.0,
-        co2_ppm=800.0,
-        photoperiod_hours=16.0
+        temperature_c=22.0, humidity_percent=65.0, co2_ppm=800.0, photoperiod_hours=16.0
     )
 
 
@@ -244,6 +222,7 @@ def dome_controller_with_history(dome_controller):
 # INTEGRATED SIMULATION FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def mission_params_standard():
     """Standard mission parameters."""
@@ -256,7 +235,7 @@ def mission_params_standard():
         uv_assisted=True,
         target_crop="Lettuce (Test)",
         planting_delay_days=25,
-        growth_duration_days=30
+        growth_duration_days=30,
     )
 
 
@@ -272,7 +251,7 @@ def mission_params_cold():
         uv_assisted=True,
         target_crop="Lettuce (Test)",
         planting_delay_days=30,
-        growth_duration_days=30
+        growth_duration_days=30,
     )
 
 
@@ -285,6 +264,7 @@ def integrated_simulation(mission_params_standard):
 # ============================================================================
 # DATA GENERATION FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_time_array():
@@ -307,12 +287,12 @@ def sample_nutrient_data():
     nitrogen = np.minimum(days * 25, 1500)
     phosphorus = np.maximum(0, (days - 15) * 8)
     potassium = 2000 / (1 + np.exp(-0.15 * (days - 20)))
-    
+
     return {
-        'days': days,
-        'nitrogen': nitrogen,
-        'phosphorus': phosphorus,
-        'potassium': potassium
+        "days": days,
+        "nitrogen": nitrogen,
+        "phosphorus": phosphorus,
+        "potassium": potassium,
     }
 
 
@@ -320,17 +300,18 @@ def sample_nutrient_data():
 # VALIDATION FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def validation_tolerances():
     """Standard validation tolerances for numerical comparisons."""
     return {
-        'temperature': 0.1,  # °C
-        'pressure': 1.0,     # PSI
-        'percentage': 0.5,   # %
-        'concentration': 10.0,  # ppm
-        'time': 0.1,         # minutes
-        'distance': 0.01,    # meters
-        'strength': 0.1      # MPa
+        "temperature": 0.1,  # °C
+        "pressure": 1.0,  # PSI
+        "percentage": 0.5,  # %
+        "concentration": 10.0,  # ppm
+        "time": 0.1,  # minutes
+        "distance": 0.01,  # meters
+        "strength": 0.1,  # MPa
     }
 
 
@@ -338,15 +319,15 @@ def validation_tolerances():
 def physical_limits():
     """Physical limits for validation."""
     return {
-        'temperature_min': -273.15,  # Absolute zero
-        'temperature_max': 200.0,    # Reasonable max
-        'pressure_min': 0.0,
-        'pressure_max': 100.0,
-        'ph_min': 0.0,
-        'ph_max': 14.0,
-        'porosity_min': 0.0,
-        'porosity_max': 1.0,
-        'concentration_max': 10000.0  # ppm
+        "temperature_min": -273.15,  # Absolute zero
+        "temperature_max": 200.0,  # Reasonable max
+        "pressure_min": 0.0,
+        "pressure_max": 100.0,
+        "ph_min": 0.0,
+        "ph_max": 14.0,
+        "porosity_min": 0.0,
+        "porosity_max": 1.0,
+        "concentration_max": 10000.0,  # ppm
     }
 
 
@@ -354,9 +335,11 @@ def physical_limits():
 # COMPARISON UTILITIES
 # ============================================================================
 
+
 @pytest.fixture
 def assert_close():
     """Fixture providing a flexible comparison function."""
+
     def _assert_close(actual, expected, tolerance=1e-6, message=""):
         """Assert two values are close within tolerance."""
         if isinstance(actual, np.ndarray):
@@ -368,10 +351,9 @@ def assert_close():
         else:
             diff = abs(actual - expected)
             assert diff <= tolerance, (
-                f"{message}\nDifference: {diff:.6e}, "
-                f"Tolerance: {tolerance:.6e}"
+                f"{message}\nDifference: {diff:.6e}, " f"Tolerance: {tolerance:.6e}"
             )
-    
+
     return _assert_close
 
 
@@ -379,16 +361,17 @@ def assert_close():
 # BENCHMARK FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def benchmark_config():
     """Configuration for performance benchmarks."""
     return {
-        'spray_volume_ml': 500.0,
-        'curing_duration_min': 30.0,
-        'nutrient_duration_days': 60,
-        'dome_duration_hours': 24.0,
-        'time_steps': 100,
-        'iterations': 5
+        "spray_volume_ml": 500.0,
+        "curing_duration_min": 30.0,
+        "nutrient_duration_days": 60,
+        "dome_duration_hours": 24.0,
+        "time_steps": 100,
+        "iterations": 5,
     }
 
 
@@ -396,41 +379,45 @@ def benchmark_config():
 # HELPER FUNCTIONS AS FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def create_test_report():
     """Factory fixture for creating test reports."""
+
     def _create_report(test_name, results, output_dir):
         """Create a JSON test report."""
         report = {
-            'test_name': test_name,
-            'timestamp': datetime.now().isoformat(),
-            'results': results
+            "test_name": test_name,
+            "timestamp": datetime.now().isoformat(),
+            "results": results,
         }
-        
+
         output_file = output_dir / f"{test_name}_report.json"
         import json
-        with open(output_file, 'w') as f:
+
+        with open(output_file, "w") as f:
             json.dump(report, f, indent=2, default=str)
-        
+
         return output_file
-    
+
     return _create_report
 
 
 @pytest.fixture
 def compare_arrays():
     """Fixture for comparing numpy arrays with detailed output."""
+
     def _compare(array1, array2, name1="Array1", name2="Array2"):
         """Compare two arrays and return detailed statistics."""
         diff = array1 - array2
         return {
-            'mean_diff': np.mean(diff),
-            'max_diff': np.max(np.abs(diff)),
-            'std_diff': np.std(diff),
-            'rmse': np.sqrt(np.mean(diff**2)),
-            'all_close': np.allclose(array1, array2)
+            "mean_diff": np.mean(diff),
+            "max_diff": np.max(np.abs(diff)),
+            "std_diff": np.std(diff),
+            "rmse": np.sqrt(np.mean(diff**2)),
+            "all_close": np.allclose(array1, array2),
         }
-    
+
     return _compare
 
 
@@ -438,15 +425,16 @@ def compare_arrays():
 # MOCK DATA FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def mock_sensor_readings():
     """Mock sensor readings for testing."""
     return {
-        'temperature_c': 22.5,
-        'humidity_percent': 64.0,
-        'co2_ppm': 820.0,
-        'o2_percent': 20.9,
-        'pressure_pa': 101325.0
+        "temperature_c": 22.5,
+        "humidity_percent": 64.0,
+        "co2_ppm": 820.0,
+        "o2_percent": 20.9,
+        "pressure_pa": 101325.0,
     }
 
 
@@ -454,10 +442,10 @@ def mock_sensor_readings():
 def mock_weather_conditions():
     """Mock lunar surface conditions."""
     return {
-        'solar_flux': 1361.0,  # W/m²
-        'surface_temp_c': -20.0,
-        'in_shadow': False,
-        'time_of_day_hours': 12.0
+        "solar_flux": 1361.0,  # W/m²
+        "surface_temp_c": -20.0,
+        "in_shadow": False,
+        "time_of_day_hours": 12.0,
     }
 
 
@@ -493,6 +481,7 @@ def volume_range():
 # ============================================================================
 # CLEANUP AND REPORTING
 # ============================================================================
+
 
 @pytest.fixture(autouse=True, scope="session")
 def cleanup_test_artifacts():

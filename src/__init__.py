@@ -40,30 +40,25 @@ __all__ = [
     "__version__",
     "__author__",
     "__license__",
-    
     # Spray Dynamics
     "SprayDynamics",
     "SprayParameters",
     "SprayResults",
-    
     # Curing Simulation
     "CuringSimulator",
     "CuringProfile",
     "CuringPhase",
     "RegolithProperties",
-    
     # Nutrient Release
     "NutrientReleaseSimulator",
     "NutrientProfile",
     "PlantRequirements",
     "Nutrient",
-    
     # Environmental Control
     "AIEnvironmentalController",
     "DomeState",
     "ControlMode",
     "EnvironmentalSetpoints",
-    
     # Utils
     "PhysicalConstants",
     "ChemicalConstants",
@@ -72,13 +67,10 @@ __all__ = [
 
 # Import core classes
 try:
-    from .spray_dynamics import (
-        SprayDynamics,
-        SprayParameters,
-        SprayResults
-    )
+    from .spray_dynamics import SprayDynamics, SprayParameters, SprayResults
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import spray_dynamics: {e}")
 
 try:
@@ -86,10 +78,11 @@ try:
         CuringSimulator,
         CuringProfile,
         CuringPhase,
-        RegolithProperties
+        RegolithProperties,
     )
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import curing_simulation: {e}")
 
 try:
@@ -97,10 +90,11 @@ try:
         NutrientReleaseSimulator,
         NutrientProfile,
         PlantRequirements,
-        Nutrient
+        Nutrient,
     )
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import nutrient_release: {e}")
 
 try:
@@ -108,20 +102,18 @@ try:
         AIEnvironmentalController,
         DomeState,
         ControlMode,
-        EnvironmentalSetpoints
+        EnvironmentalSetpoints,
     )
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import environmental_control: {e}")
 
 try:
-    from .utils import (
-        PhysicalConstants,
-        ChemicalConstants,
-        UnitConverter
-    )
+    from .utils import PhysicalConstants, ChemicalConstants, UnitConverter
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import utils: {e}")
 
 
@@ -137,5 +129,5 @@ def get_info():
         "version": __version__,
         "author": __author__,
         "license": __license__,
-        "description": "Dual-purpose regolith stabilization and agricultural substrate"
+        "description": "Dual-purpose regolith stabilization and agricultural substrate",
     }

@@ -51,13 +51,13 @@ TEST_OUTPUT_DIR = "test_outputs"
 
 # Test tolerances
 TOLERANCES = {
-    "temperature": 0.1,      # °C
-    "pressure": 1.0,         # PSI
-    "percentage": 0.5,       # %
-    "concentration": 10.0,   # ppm
-    "time": 0.1,             # minutes
-    "distance": 0.01,        # meters
-    "strength": 0.1          # MPa
+    "temperature": 0.1,  # °C
+    "pressure": 1.0,  # PSI
+    "percentage": 0.5,  # %
+    "concentration": 10.0,  # ppm
+    "time": 0.1,  # minutes
+    "distance": 0.01,  # meters
+    "strength": 0.1,  # MPa
 }
 
 # Physical limits for validation
@@ -70,5 +70,5 @@ PHYSICAL_LIMITS = {
     "ph_max": 14.0,
     "porosity_min": 0.0,
     "porosity_max": 1.0,
-    "concentration_max": 10000.0  # ppm
+    "concentration_max": 10000.0,  # ppm
 }
