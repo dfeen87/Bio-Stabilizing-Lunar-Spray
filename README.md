@@ -3,7 +3,7 @@
 <div align="center">
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![TRL](https://img.shields.io/badge/TRL-3--4-orange.svg)
 
@@ -79,7 +79,7 @@ This eliminates the need for separate materials for surface stabilization and ag
 ## 📦 Installation
 
 ### Prerequisites
-- Python 3.8 or higher
+- Python 3.9 or higher
 - pip package manager
 
 ### Standard Installation

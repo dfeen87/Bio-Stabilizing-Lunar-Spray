@@ -20,7 +20,7 @@ Complete guide for installing, configuring, and using the Bio-Stabilizing Lunar 
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher
 - pip package manager
 - (Optional) Git for cloning repository
 
@@ -548,7 +548,7 @@ pytest tests/ -m "not slow" -x
 
 ## Deployment Checklist
 
-- [ ] Python 3.8+ installed
+- [ ] Python 3.9+ installed
 - [ ] Virtual environment created
 - [ ] Dependencies installed (`pip install -e .`)
 - [ ] Tests passing (`pytest tests/ -v`)
