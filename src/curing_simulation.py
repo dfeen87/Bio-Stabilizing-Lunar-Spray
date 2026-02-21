@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 from enum import Enum
+from utils import CuringConstants, PhysicalConstants
 
 
 class CuringPhase(Enum):
@@ -55,14 +56,6 @@ class CuringSimulator:
     - Regolith composition effects
     """
     
-    # Curing parameters (from experimental data)
-    BASE_CURE_TIME = 14.0  # minutes at 0°C
-    MAX_BOND_STRENGTH = 3.5  # MPa
-    UV_ACCELERATION = 0.30  # 30% faster with UV
-    ACTIVATION_ENERGY = 45.0  # kJ/mol (typical for geopolymers)
-    GAS_CONSTANT = 8.314  # J/(mol·K)
-    MAX_CURE_TIME = 90.0  # minutes (extreme cold ceiling)
-    
     def __init__(self, 
                  uv_assisted: bool = False,
                  regolith: Optional[RegolithProperties] = None):
@@ -92,7 +85,7 @@ class CuringSimulator:
         T_kelvin = temperature_c + 273.15
         T_ref = 273.15  # 0°C reference
         
-        exponent = -(self.ACTIVATION_ENERGY * 1000) / self.GAS_CONSTANT
+        exponent = -(CuringConstants.ACTIVATION_ENERGY * 1000) / PhysicalConstants.GAS_CONSTANT
         factor = np.exp(exponent * (1/T_kelvin - 1/T_ref))
         
         return factor
@@ -109,19 +102,21 @@ class CuringSimulator:
         """
         # Arrhenius-style temperature dependence
         activation_factor = self.calculate_activation_factor(temperature_c)
-        cure_time = self.BASE_CURE_TIME / activation_factor
+        cure_time = CuringConstants.BASE_CURE_TIME / activation_factor
         
         # UV acceleration
         if self.uv_assisted:
-            cure_time *= (1 - self.UV_ACCELERATION)
+            cure_time *= (1 - CuringConstants.UV_ACCELERATION)
         
         # Regolith composition effects
         # Higher Al2O3 content accelerates geopolymerization
-        al_factor = self.regolith.alumina_content / 14.0
+        # Use a small epsilon to avoid division by zero if alumina is 0
+        alumina = max(self.regolith.alumina_content, 0.01)
+        al_factor = alumina / 14.0
         cure_time /= al_factor
         
         # Clamp cure time to keep extreme cold reactions progressing
-        return min(max(cure_time, 2.0), self.MAX_CURE_TIME)
+        return min(max(cure_time, 2.0), CuringConstants.MAX_CURE_TIME)
     
     def calculate_bond_strength(self, 
                                time_min: float, 
@@ -141,11 +136,13 @@ class CuringSimulator:
         # Sigmoidal strength development
         # Strength develops as geopolymer network forms
         curve_steepness = 5
-        normalized_time = (time_min - cure_time) / cure_time
+        # Avoid division by zero if cure_time is 0 (unlikely but safe)
+        safe_cure_time = max(cure_time, 1e-6)
+        normalized_time = (time_min - safe_cure_time) / safe_cure_time
         cure_fraction = 1 / (1 + np.exp(-curve_steepness * normalized_time))
         
         # Base strength from geopolymer network
-        base_strength = self.MAX_BOND_STRENGTH * cure_fraction
+        base_strength = CuringConstants.MAX_BOND_STRENGTH * cure_fraction
         
         # Temperature-dependent maximum strength
         # Very low temperatures reduce ultimate strength slightly
@@ -194,12 +191,14 @@ class CuringSimulator:
         
         # Sigmoidal cure fraction development
         curve_steepness = 5
-        normalized_time = (time - cure_time) / cure_time
+        # Avoid division by zero
+        safe_cure_time = max(cure_time, 1e-6)
+        normalized_time = (time - safe_cure_time) / safe_cure_time
         cure_fraction = 1 / (1 + np.exp(-curve_steepness * normalized_time))
         
         # Bond strength follows cure fraction with temperature correction
         temp_strength_factor = 1.0 - 0.001 * max(0, -temperature_c - 50)
-        bond_strength = self.MAX_BOND_STRENGTH * cure_fraction * temp_strength_factor
+        bond_strength = CuringConstants.MAX_BOND_STRENGTH * cure_fraction * temp_strength_factor
         
         # Determine phase at each time point
         phase = np.array([self.get_curing_phase(cf) for cf in cure_fraction])
@@ -272,7 +271,7 @@ class CuringSimulator:
         ax2.set_title('Strength Development Over Time')
         ax2.grid(True, alpha=0.3)
         ax2.legend()
-        ax2.axhline(y=self.MAX_BOND_STRENGTH, color='g', 
+        ax2.axhline(y=CuringConstants.MAX_BOND_STRENGTH, color='g',
                    linestyle='--', alpha=0.3, label='Max strength')
         
         plt.tight_layout()

@@ -51,8 +51,6 @@ class TestSprayDynamics:
     def test_initialization(self, simulator):
         """Test simulator initialization."""
         assert simulator.params.pressure_psi == 25.0
-        assert hasattr(simulator, 'GRAVITY_MOON')
-        assert simulator.GRAVITY_MOON == 1.62
     
     def test_viscosity_factor_at_reference_temp(self, simulator):
         """Test viscosity factor at reference temperature (20°C)."""
@@ -212,8 +210,8 @@ class TestEdgeCases:
     def test_zero_volume(self):
         """Test handling of zero volume."""
         simulator = SprayDynamics(SprayParameters())
-        radius = simulator.calculate_coverage_radius(volume_ml=0)
-        assert radius == 0
+        with pytest.raises(ValueError):
+            simulator.calculate_coverage_radius(volume_ml=0)
     
     def test_very_small_volume(self):
         """Test handling of very small volume."""

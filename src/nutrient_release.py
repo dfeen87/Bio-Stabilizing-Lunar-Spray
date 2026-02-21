@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
+from utils import NutrientConstants
 
 
 class Nutrient(Enum):
@@ -64,28 +65,6 @@ class NutrientReleaseSimulator:
     - pH evolution during transition
     """
     
-    # Maximum concentrations achievable (ppm)
-    K_MAX = 2000.0
-    N_MAX = 1500.0
-    P_MAX = 900.0
-    MG_MAX = 500.0
-    S_MAX = 800.0
-    CA_MAX = 600.0
-    
-    # Release kinetics parameters
-    K_RATE = 0.15  # Sigmoid slope for K release
-    K_DELAY = 30   # Day when K release is at 50%
-    
-    N_FAST_RATE = 30  # ppm/day for initial N release
-    N_SLOW_RATE = 20  # ppm/day for sustained N release
-    N_TRANSITION_DAY = 20
-    
-    P_RATE = 0.1
-    P_DELAY = 50
-    
-    MG_START_DAY = 10
-    MG_RATE = 12  # ppm/day
-    
     def __init__(self, 
                  initial_ph: float = 10.0,
                  water_availability: float = 1.0):
@@ -113,7 +92,7 @@ class NutrientReleaseSimulator:
             Potassium concentration in ppm
         """
         release_fraction = self._potassium_release_fraction(np.array(day))
-        return float(self.K_MAX * release_fraction * self.water_factor)
+        return float(NutrientConstants.K_MAX * release_fraction * self.water_factor)
     
     def calculate_nitrogen_release(self, day: float) -> float:
         """
@@ -129,7 +108,7 @@ class NutrientReleaseSimulator:
             Nitrogen concentration in ppm
         """
         total_n = self._nitrogen_release_total(np.array(day))
-        return float(np.minimum(total_n, self.N_MAX) * self.water_factor)
+        return float(np.minimum(total_n, NutrientConstants.N_MAX) * self.water_factor)
     
     def calculate_phosphorus_release(self, day: float) -> float:
         """
@@ -161,7 +140,7 @@ class NutrientReleaseSimulator:
             Magnesium concentration in ppm
         """
         mg_released = self._magnesium_release_total(np.array(day))
-        return float(np.minimum(mg_released, self.MG_MAX) * self.water_factor)
+        return float(np.minimum(mg_released, NutrientConstants.MG_MAX) * self.water_factor)
     
     def calculate_sulfur_release(self, day: float) -> float:
         """
@@ -191,26 +170,26 @@ class NutrientReleaseSimulator:
             return 0.0
         p = self.calculate_phosphorus_release(day)
         adjusted_p = p / self.water_factor
-        return min(adjusted_p * 1.2, self.CA_MAX) * self.water_factor
+        return min(adjusted_p * 1.2, NutrientConstants.CA_MAX) * self.water_factor
 
     def _potassium_release_fraction(self, days: np.ndarray) -> np.ndarray:
-        exponent = -self.K_RATE * (days - self.K_DELAY)
+        exponent = -NutrientConstants.K_RATE * (days - NutrientConstants.K_DELAY)
         return 1 / (1 + np.exp(exponent))
 
     def _nitrogen_release_total(self, days: np.ndarray) -> np.ndarray:
-        fast_phase = np.minimum(days, self.N_TRANSITION_DAY) * self.N_FAST_RATE
-        slow_phase = np.maximum(days - self.N_TRANSITION_DAY, 0) * self.N_SLOW_RATE
+        fast_phase = np.minimum(days, NutrientConstants.N_TRANSITION_DAY) * NutrientConstants.N_FAST_RATE
+        slow_phase = np.maximum(days - NutrientConstants.N_TRANSITION_DAY, 0) * NutrientConstants.N_SLOW_RATE
         return fast_phase + slow_phase
 
     def _phosphorus_release_total(self, days: np.ndarray) -> np.ndarray:
-        exponent = -self.P_RATE * (days - self.P_DELAY)
+        exponent = -NutrientConstants.P_RATE * (days - NutrientConstants.P_DELAY)
         release_fraction = 1 / (1 + np.exp(exponent))
         urea_p_contribution = np.minimum(days * 1.5, 15)
-        return self.P_MAX * release_fraction + urea_p_contribution
+        return NutrientConstants.P_MAX * release_fraction + urea_p_contribution
 
     def _magnesium_release_total(self, days: np.ndarray) -> np.ndarray:
-        mg_released = np.maximum(days - self.MG_START_DAY, 0) * self.MG_RATE
-        return np.minimum(mg_released, self.MG_MAX)
+        mg_released = np.maximum(days - NutrientConstants.MG_START_DAY, 0) * NutrientConstants.MG_RATE
+        return np.minimum(mg_released, NutrientConstants.MG_MAX)
 
     def _ph_values(self, days: np.ndarray) -> np.ndarray:
         final_ph = 6.5
@@ -288,8 +267,8 @@ class NutrientReleaseSimulator:
         time = np.linspace(0, duration_days, time_points)
         water_factor = self.water_factor
 
-        potassium = self.K_MAX * self._potassium_release_fraction(time) * water_factor
-        nitrogen = np.minimum(self._nitrogen_release_total(time), self.N_MAX) * water_factor
+        potassium = NutrientConstants.K_MAX * self._potassium_release_fraction(time) * water_factor
+        nitrogen = np.minimum(self._nitrogen_release_total(time), NutrientConstants.N_MAX) * water_factor
         phosphorus = self._phosphorus_release_total(time) * water_factor
         magnesium = self._magnesium_release_total(time) * water_factor
         sulfur = magnesium * 1.6
@@ -297,7 +276,7 @@ class NutrientReleaseSimulator:
             calcium = np.zeros_like(time)
         else:
             adjusted_p = phosphorus / water_factor
-            calcium = np.minimum(adjusted_p * 1.2, self.CA_MAX) * water_factor
+            calcium = np.minimum(adjusted_p * 1.2, NutrientConstants.CA_MAX) * water_factor
 
         concentrations = {
             Nutrient.POTASSIUM: potassium,

@@ -302,7 +302,7 @@ class IntegratedLunarSpraySimulation:
         # Calculate total energy
         times = [h['sensors']['timestamp'] / 3600 for h in controller.history]
         energy = [h['energy_consumption_w'] for h in controller.history]
-        total_energy_kwh = np.trapz(energy, times) / 1000
+        total_energy_kwh = np.trapezoid(energy, times) / 1000
         
         if verbose:
             final = controller.state.sensors

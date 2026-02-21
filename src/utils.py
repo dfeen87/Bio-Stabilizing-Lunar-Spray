@@ -76,6 +76,46 @@ class ChemicalConstants:
     }
 
 
+class SprayConstants:
+    """Constants for spray dynamics."""
+    BASE_VISCOSITY = 3000.0  # cP at 20°C
+    DEFAULT_PRESSURE = 25.0  # PSI
+    DEFAULT_NOZZLE_DIAMETER = 2.0  # mm
+
+
+class CuringConstants:
+    """Constants for curing simulation."""
+    BASE_CURE_TIME = 14.0  # minutes at 0°C
+    MAX_BOND_STRENGTH = 3.5  # MPa
+    UV_ACCELERATION = 0.30  # 30% faster with UV
+    ACTIVATION_ENERGY = 45.0  # kJ/mol
+    MAX_CURE_TIME = 90.0  # minutes
+
+
+class NutrientConstants:
+    """Constants for nutrient release."""
+    K_MAX = 2000.0  # ppm
+    N_MAX = 1500.0  # ppm
+    P_MAX = 900.0   # ppm
+    MG_MAX = 500.0  # ppm
+    S_MAX = 800.0   # ppm
+    CA_MAX = 600.0  # ppm
+
+    # Release kinetics parameters
+    K_RATE = 0.15
+    K_DELAY = 30
+
+    N_FAST_RATE = 30
+    N_SLOW_RATE = 20
+    N_TRANSITION_DAY = 20
+
+    P_RATE = 0.1
+    P_DELAY = 50
+
+    MG_START_DAY = 10
+    MG_RATE = 12
+
+
 # ============================================================================
 # DATA STRUCTURES
 # ============================================================================

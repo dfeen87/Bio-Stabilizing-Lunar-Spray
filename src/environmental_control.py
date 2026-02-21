@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
+from utils import PhysicalConstants
 
 
 class ControlMode(Enum):
@@ -55,7 +56,7 @@ class DomeSensors:
     co2_ppm: float = 400.0
     o2_percent: float = 20.9
     light_intensity_umol: float = 0.0
-    pressure_pa: float = 101325.0
+    pressure_pa: float = PhysicalConstants.STANDARD_PRESSURE_PA
     soil_moisture_percent: float = 50.0
     timestamp: float = 0.0
 
@@ -116,7 +117,7 @@ class PIDController:
         Args:
             setpoint: Desired value
             measured: Current measured value
-            dt: Time step
+            dt: Time step in seconds
             
         Returns:
             Control output
@@ -126,14 +127,19 @@ class PIDController:
         # Proportional term
         p_term = self.kp * error
         
-        # Integral term with anti-windup
-        self.integral += error * dt
-        self.integral = np.clip(self.integral, -100, 100)
-        i_term = self.ki * self.integral
-        
-        # Derivative term
-        d_term = self.kd * (error - self.last_error) / dt if dt > 0 else 0.0
-        self.last_error = error
+        if dt <= 0:
+            # Skip integral accumulation and derivative calculation
+            i_term = self.ki * self.integral
+            d_term = 0.0
+        else:
+            # Integral term with anti-windup
+            self.integral += error * dt
+            self.integral = np.clip(self.integral, -100, 100)
+            i_term = self.ki * self.integral
+
+            # Derivative term
+            d_term = self.kd * (error - self.last_error) / dt
+            self.last_error = error
         
         # Calculate output with limits
         output = p_term + i_term + d_term
@@ -536,7 +542,7 @@ class AIEnvironmentalController:
         ax4.set_title('Energy Consumption')
         ax4.grid(True, alpha=0.3)
         
-        total_energy_kwh = np.trapz(energy, times) / 1000
+        total_energy_kwh = np.trapezoid(energy, times) / 1000
         ax4.text(0.5, 0.95, f'Total: {total_energy_kwh:.2f} kWh', 
                 transform=ax4.transAxes, ha='center', va='top',
                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))

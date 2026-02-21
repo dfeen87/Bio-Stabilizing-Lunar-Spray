@@ -15,6 +15,7 @@ from curing_simulation import (
     CuringPhase,
     RegolithProperties
 )
+from utils import CuringConstants
 
 
 class TestRegolithProperties:
@@ -57,13 +58,13 @@ class TestCuringSimulator:
         """Test simulator initialization."""
         assert simulator.uv_assisted is False
         assert isinstance(simulator.regolith, RegolithProperties)
-        assert simulator.MAX_BOND_STRENGTH == 3.5
-        assert simulator.BASE_CURE_TIME == 14.0
+        assert CuringConstants.MAX_BOND_STRENGTH == 3.5
+        assert CuringConstants.BASE_CURE_TIME == 14.0
     
     def test_uv_initialization(self, uv_simulator):
         """Test UV-assisted initialization."""
         assert uv_simulator.uv_assisted is True
-        assert uv_simulator.UV_ACCELERATION == 0.30
+        assert CuringConstants.UV_ACCELERATION == 0.30
     
     def test_activation_factor_at_reference(self, simulator):
         """Test Arrhenius factor at reference temperature."""
@@ -131,7 +132,7 @@ class TestCuringSimulator:
         """Test bond strength never exceeds maximum."""
         for time in [10, 20, 30, 60, 120]:
             strength = simulator.calculate_bond_strength(time, 0.0)
-            assert strength <= simulator.MAX_BOND_STRENGTH * 1.01  # Allow 1% tolerance
+            assert strength <= CuringConstants.MAX_BOND_STRENGTH * 1.01  # Allow 1% tolerance
     
     def test_curing_phase_determination(self, simulator):
         """Test curing phase identification."""
