@@ -611,7 +611,7 @@ For best performance:
 
 ## Version Compatibility
 
-- Python: 3.8+
+- Python: 3.9+
 - NumPy: 1.21+
 - SciPy: 1.7+
 - Matplotlib: 3.4+

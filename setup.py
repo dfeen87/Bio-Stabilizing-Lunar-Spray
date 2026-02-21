@@ -22,10 +22,10 @@ if requirements_file.exists():
         requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 else:
     requirements = [
-        "numpy>=1.21.0,<2.0.0",
-        "scipy>=1.7.0,<2.0.0",
-        "matplotlib>=3.4.0,<4.0.0",
-        "pandas>=1.3.0,<2.0.0",
+        "numpy>=2.0.0",
+        "scipy>=1.11.0",
+        "matplotlib>=3.8.0",
+        "pandas>=2.0.0",
     ]
 
 setup(
@@ -51,7 +51,7 @@ setup(
     # ========================================================================
     packages=find_packages(exclude=["tests", "tests.*", "docs", "examples"]),
     include_package_data=True,
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     
     # ========================================================================
     # Dependencies
@@ -98,7 +98,6 @@ setup(
         
         # Python Versions
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",

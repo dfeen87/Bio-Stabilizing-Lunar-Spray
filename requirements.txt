@@ -1,6 +1,6 @@
 # Bio-Stabilizing Lunar Spray - Python Dependencies
 # Author: Don Michael Feeney Jr
-# Python 3.8+
+# Python 3.9+
 
 # Core scientific computing
 numpy>=2.0.0
