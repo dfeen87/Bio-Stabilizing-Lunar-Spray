@@ -9,13 +9,13 @@ Author: Don Michael Feeney Jr
 
 import pytest
 import numpy as np
-from nutrient_release import (
+from src.nutrient_release import (
     NutrientReleaseSimulator,
     NutrientProfile,
     PlantRequirements,
     Nutrient,
 )
-from utils import NutrientConstants
+from src.utils import NutrientConstants
 
 
 class TestPlantRequirements:

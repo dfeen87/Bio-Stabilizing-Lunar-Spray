@@ -11,10 +11,10 @@ import pytest
 import numpy as np
 from datetime import datetime
 
-from spray_dynamics import SprayDynamics, SprayParameters
-from curing_simulation import CuringSimulator
-from nutrient_release import NutrientReleaseSimulator, PlantRequirements, Nutrient
-from environmental_control import AIEnvironmentalController, ControlMode
+from src.spray_dynamics import SprayDynamics, SprayParameters
+from src.curing_simulation import CuringSimulator
+from src.nutrient_release import NutrientReleaseSimulator, PlantRequirements, Nutrient
+from src.environmental_control import AIEnvironmentalController, ControlMode
 from integrated_simulation import IntegratedLunarSpraySimulation, MissionParameters
 
 

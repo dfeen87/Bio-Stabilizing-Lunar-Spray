@@ -9,13 +9,13 @@ Author: Don Michael Feeney Jr
 
 import pytest
 import numpy as np
-from curing_simulation import (
+from src.curing_simulation import (
     CuringSimulator,
     CuringProfile,
     CuringPhase,
     RegolithProperties,
 )
-from utils import CuringConstants
+from src.utils import CuringConstants
 
 
 class TestRegolithProperties:

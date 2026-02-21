@@ -1,6 +1,6 @@
 """Tests for environmental control dynamics."""
 
-from environmental_control import AIEnvironmentalController
+from src.environmental_control import AIEnvironmentalController
 
 
 def test_humidity_control_dehumidifies_when_above_setpoint():

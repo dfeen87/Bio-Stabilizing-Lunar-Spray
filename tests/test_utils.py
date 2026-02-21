@@ -8,7 +8,7 @@ Author: Don Michael Feeney Jr
 
 import pytest
 import numpy as np
-from utils import (
+from src.utils import (
     PhysicalConstants,
     ChemicalConstants,
     LunarLocation,

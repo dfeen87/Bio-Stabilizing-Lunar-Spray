@@ -9,7 +9,7 @@ Author: Don Michael Feeney Jr
 
 import pytest
 import numpy as np
-from spray_dynamics import SprayDynamics, SprayParameters, SprayResults
+from src.spray_dynamics import SprayDynamics, SprayParameters, SprayResults
 
 
 class TestSprayParameters:
