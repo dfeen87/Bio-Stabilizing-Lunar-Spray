@@ -261,7 +261,7 @@ CO(NH₂)₂·H₃PO₄ → NH₄⁺ + NO₃⁻
 bio-stabilizing-lunar-spray/
 │
 ├── README.md                     # Project overview, scope, and usage instructions
-├── LICENSE                       # Open-source license (MIT)
+├── LICENSE                       
 ├── .gitignore                    # Git ignore rules for local and generated files
 ├── requirements.txt              # Python dependencies for installation and execution
 ├── setup.py                      # Package configuration and installation metadata
