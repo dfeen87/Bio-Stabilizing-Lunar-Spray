@@ -2,7 +2,6 @@
 
 <div align="center">
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![TRL](https://img.shields.io/badge/TRL-3--4-orange.svg)
@@ -475,7 +474,7 @@ We welcome contributions from the space engineering, chemistry, agriculture, and
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is available for **non‑commercial use only** under the terms of the included LICENSE file. Commercial use requires a separate paid license.
 
 ---
 
