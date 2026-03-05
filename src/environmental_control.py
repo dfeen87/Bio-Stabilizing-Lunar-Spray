@@ -13,7 +13,12 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
-from .utils import PhysicalConstants
+from .utils import (
+    PhysicalConstants,
+    EnvironmentalConstants,
+    validate_temperature,
+    validate_percentage,
+)
 
 
 class ControlMode(Enum):
@@ -113,6 +118,8 @@ class PIDController:
             output_min: Minimum output value
             output_max: Maximum output value
         """
+        if output_min > output_max:
+            raise ValueError("output_min cannot be greater than output_max")
         self.kp = kp
         self.ki = ki
         self.kd = kd
@@ -146,11 +153,19 @@ class PIDController:
         else:
             # Integral term with anti-windup
             self.integral += error * dt
-            self.integral = np.clip(self.integral, -100, 100)
+            # Robust anti-windup
+            max_integral = (
+                max(abs(self.output_min), abs(self.output_max)) * 2
+                if (self.output_min != 0 or self.output_max != 100)
+                else 100
+            )
+            self.integral = np.clip(self.integral, -max_integral, max_integral)
             i_term = self.ki * self.integral
 
             # Derivative term
-            d_term = self.kd * (error - self.last_error) / dt
+            # Avoid divide by zero
+            safe_dt = max(dt, 1e-6)
+            d_term = self.kd * (error - self.last_error) / safe_dt
             self.last_error = error
 
         # Calculate output with limits
@@ -188,18 +203,26 @@ class AIEnvironmentalController:
 
         # Initialize PID controllers
         self.temp_controller = PIDController(
-            kp=2.0, ki=0.1, kd=0.5, output_min=-100, output_max=100
+            kp=EnvironmentalConstants.PID_TEMP_KP,
+            ki=EnvironmentalConstants.PID_TEMP_KI,
+            kd=EnvironmentalConstants.PID_TEMP_KD,
+            output_min=-100,
+            output_max=100,
         )
         # Humidity control must support both humidification (positive output)
         # and dehumidification (negative output for venting).
         self.humidity_controller = PIDController(
-            kp=1.5,
-            ki=0.05,
-            kd=0.3,
+            kp=EnvironmentalConstants.PID_HUMIDITY_KP,
+            ki=EnvironmentalConstants.PID_HUMIDITY_KI,
+            kd=EnvironmentalConstants.PID_HUMIDITY_KD,
             output_min=-100,
             output_max=100,
         )
-        self.co2_controller = PIDController(kp=0.5, ki=0.02, kd=0.1)
+        self.co2_controller = PIDController(
+            kp=EnvironmentalConstants.PID_CO2_KP,
+            ki=EnvironmentalConstants.PID_CO2_KI,
+            kd=EnvironmentalConstants.PID_CO2_KD,
+        )
 
         # System history for learning
         self.history: List[Dict] = []
@@ -216,9 +239,7 @@ class AIEnvironmentalController:
         """
         return self.state.sensors
 
-    def check_alerts(
-        self, sensors: DomeSensors, setpoints: EnvironmentalSetpoints
-    ) -> List[Tuple[AlertLevel, str]]:
+    def check_alerts(self, sensors: DomeSensors, setpoints: EnvironmentalSetpoints) -> List[Tuple[AlertLevel, str]]:
         """
         Check for out-of-range conditions and generate alerts.
 
@@ -292,9 +313,7 @@ class AIEnvironmentalController:
 
         return alerts
 
-    def calculate_temperature_control(
-        self, current: float, setpoint: float, dt: float
-    ) -> Tuple[float, bool]:
+    def calculate_temperature_control(self, current: float, setpoint: float, dt: float) -> Tuple[float, bool]:
         """
         Calculate heating/cooling requirements.
 
@@ -306,6 +325,8 @@ class AIEnvironmentalController:
         Returns:
             Tuple of (heater_power_percent, cooler_active)
         """
+        validate_temperature(current)
+        validate_temperature(setpoint)
         control_output = self.temp_controller.update(setpoint, current, dt)
 
         if control_output > 0:
@@ -315,9 +336,7 @@ class AIEnvironmentalController:
             # Need cooling
             return (0.0, control_output < 0)
 
-    def calculate_humidity_control(
-        self, current: float, setpoint: float, dt: float
-    ) -> Tuple[float, float]:
+    def calculate_humidity_control(self, current: float, setpoint: float, dt: float) -> Tuple[float, float]:
         """
         Calculate misting and venting requirements.
 
@@ -329,6 +348,8 @@ class AIEnvironmentalController:
         Returns:
             Tuple of (misting_rate, vent_position)
         """
+        validate_percentage(current, "Humidity")
+        validate_percentage(setpoint, "Humidity")
         control_output = self.humidity_controller.update(setpoint, current, dt)
 
         if control_output > 0:
@@ -342,9 +363,7 @@ class AIEnvironmentalController:
 
         return (misting_rate, vent_position)
 
-    def calculate_co2_control(
-        self, current: float, setpoint: float, dt: float
-    ) -> float:
+    def calculate_co2_control(self, current: float, setpoint: float, dt: float) -> float:
         """
         Calculate CO2 injection rate.
 
@@ -359,9 +378,7 @@ class AIEnvironmentalController:
         control_output = self.co2_controller.update(setpoint, current, dt)
         return max(0.0, control_output * 0.1)
 
-    def calculate_lighting_control(
-        self, current_hour: float, photoperiod: float
-    ) -> float:
+    def calculate_lighting_control(self, current_hour: float, photoperiod: float) -> float:
         """
         Calculate LED power based on photoperiod.
 
@@ -407,25 +424,20 @@ class AIEnvironmentalController:
             return self._emergency_response()
 
         # Calculate control outputs
-        heater, cooler = self.calculate_temperature_control(
-            sensors.temperature_c, setpoints.temperature_c, dt
-        )
+        heater, cooler = self.calculate_temperature_control(sensors.temperature_c, setpoints.temperature_c, dt)
 
-        misting, venting = self.calculate_humidity_control(
-            sensors.humidity_percent, setpoints.humidity_percent, dt
-        )
+        misting, venting = self.calculate_humidity_control(sensors.humidity_percent, setpoints.humidity_percent, dt)
 
-        co2_injection = self.calculate_co2_control(
-            sensors.co2_ppm, setpoints.co2_ppm, dt
-        )
+        co2_injection = self.calculate_co2_control(sensors.co2_ppm, setpoints.co2_ppm, dt)
 
-        led_power = self.calculate_lighting_control(
-            sensors.timestamp / 3600, setpoints.photoperiod_hours
-        )
+        led_power = self.calculate_lighting_control(sensors.timestamp / 3600, setpoints.photoperiod_hours)
 
         # Circulation fan - proportional to temperature error
         temp_error = abs(sensors.temperature_c - setpoints.temperature_c)
-        fan_speed = 500 + min(temp_error * 100, 1500)  # 500-2000 RPM
+        fan_speed = EnvironmentalConstants.FAN_MIN_RPM + min(
+            temp_error * 100,
+            EnvironmentalConstants.FAN_MAX_RPM - EnvironmentalConstants.FAN_MIN_RPM,
+        )
 
         actions = ControlActions(
             heater_power_percent=heater,
@@ -439,11 +451,11 @@ class AIEnvironmentalController:
 
         # Calculate energy consumption
         energy = (
-            heater * 2.0  # Heater: up to 200W
-            + (60 if cooler else 0)  # Cooler: 60W
-            + led_power * 1.0  # LEDs: up to 100W
-            + fan_speed * 0.02
-        )  # Fan: ~40W at max
+            heater * (EnvironmentalConstants.HEATER_MAX_W / 100.0)
+            + (EnvironmentalConstants.COOLER_W if cooler else 0)
+            + led_power * (EnvironmentalConstants.LED_MAX_W / 100.0)
+            + fan_speed * (EnvironmentalConstants.FAN_MAX_W / EnvironmentalConstants.FAN_MAX_RPM)
+        )
 
         self.state.actions = actions
         self.state.energy_consumption_w = energy
@@ -464,7 +476,7 @@ class AIEnvironmentalController:
             vent_position_percent=100.0,  # Full ventilation
             co2_injection_rate_ml_min=0.0,
             led_power_percent=0.0,
-            circulation_fan_rpm=2000.0,  # Max ventilation
+            circulation_fan_rpm=EnvironmentalConstants.FAN_MAX_RPM,  # Max ventilation
         )
 
     def simulate_step(self, dt: float = 60.0):
@@ -484,19 +496,17 @@ class AIEnvironmentalController:
         temp_change = 0.0
         temp_change += actions.heater_power_percent * 0.001  # Heating effect
         temp_change -= 0.002 if actions.cooler_active else 0.0  # Cooling effect
-        temp_change -= (
-            sensors.temperature_c - (-20)
-        ) * 0.0001  # Heat loss to lunar night
-        sensors.temperature_c += temp_change * dt
+        temp_change -= (sensors.temperature_c - (-20)) * 0.0001  # Heat loss to lunar night
+
+        # Don't let simulation temperature explode to invalid ranges due to large dt
+        sensors.temperature_c = np.clip(sensors.temperature_c + temp_change * dt, -270.0, 150.0)
 
         # Humidity dynamics
         humidity_change = 0.0
         humidity_change += actions.misting_rate_ml_min * 0.05  # Misting effect
         humidity_change -= actions.vent_position_percent * 0.001  # Venting effect
         humidity_change -= sensors.humidity_percent * 0.0005  # Natural evaporation
-        sensors.humidity_percent = np.clip(
-            sensors.humidity_percent + humidity_change * dt, 0, 100
-        )
+        sensors.humidity_percent = np.clip(sensors.humidity_percent + humidity_change * dt, 0, 100)
 
         # CO2 dynamics
         co2_change = 0.0
@@ -539,9 +549,7 @@ class AIEnvironmentalController:
             return
 
         # Extract data from history
-        times = [
-            h["sensors"]["timestamp"] / 3600 for h in self.history
-        ]  # Convert to hours
+        times = [h["sensors"]["timestamp"] / 3600 for h in self.history]  # Convert to hours
         temps = [h["sensors"]["temperature_c"] for h in self.history]
         humidity = [h["sensors"]["humidity_percent"] for h in self.history]
         co2 = [h["sensors"]["co2_ppm"] for h in self.history]
@@ -560,10 +568,8 @@ class AIEnvironmentalController:
         )
         ax1.fill_between(
             times,
-            self.state.setpoints.temperature_c
-            - self.state.setpoints.temperature_tolerance,
-            self.state.setpoints.temperature_c
-            + self.state.setpoints.temperature_tolerance,
+            self.state.setpoints.temperature_c - self.state.setpoints.temperature_tolerance,
+            self.state.setpoints.temperature_c + self.state.setpoints.temperature_tolerance,
             alpha=0.2,
             color="g",
             label="Tolerance",
@@ -592,9 +598,7 @@ class AIEnvironmentalController:
         # CO2
         ax3 = axes[1, 0]
         ax3.plot(times, co2, "purple", linewidth=2)
-        ax3.axhline(
-            y=self.state.setpoints.co2_ppm, color="g", linestyle="--", label="Setpoint"
-        )
+        ax3.axhline(y=self.state.setpoints.co2_ppm, color="g", linestyle="--", label="Setpoint")
         ax3.set_xlabel("Time (hours)")
         ax3.set_ylabel("CO₂ (ppm)")
         ax3.set_title("CO₂ Concentration")
@@ -646,28 +650,23 @@ def run_example():
 
     print(f"\nDome ID: {controller.dome_id}")
     print(f"Mode: {controller.state.mode.value}")
-    print(f"\nInitial Conditions:")
+    print("\nInitial Conditions:")
     print(f"  Temperature: {controller.state.sensors.temperature_c}°C")
     print(f"  Humidity: {controller.state.sensors.humidity_percent}%")
     print(f"  CO₂: {controller.state.sensors.co2_ppm} ppm")
 
-    print(f"\nSetpoints:")
-    print(
-        f"  Temperature: {controller.state.setpoints.temperature_c}°C ± {controller.state.setpoints.temperature_tolerance}°C"
-    )
-    print(
-        f"  Humidity: {controller.state.setpoints.humidity_percent}% ± {controller.state.setpoints.humidity_tolerance}%"
-    )
-    print(
-        f"  CO₂: {controller.state.setpoints.co2_ppm} ppm ± {controller.state.setpoints.co2_tolerance} ppm"
-    )
+    print("\nSetpoints:")
+    st = controller.state.setpoints
+    print(f"  Temperature: {st.temperature_c}°C ± {st.temperature_tolerance}°C")
+    print(f"  Humidity: {st.humidity_percent}% ± {st.humidity_tolerance}%")
+    print(f"  CO₂: {st.co2_ppm} ppm ± {st.co2_tolerance} ppm")
 
-    print(f"\nRunning 24-hour simulation...")
+    print("\nRunning 24-hour simulation...")
     controller.run_simulation(duration_hours=24.0, dt=60.0)
 
     # Final state
     final_sensors = controller.state.sensors
-    print(f"\nFinal Conditions (after 24h):")
+    print("\nFinal Conditions (after 24h):")
     print(f"  Temperature: {final_sensors.temperature_c:.1f}°C")
     print(f"  Humidity: {final_sensors.humidity_percent:.1f}%")
     print(f"  CO₂: {final_sensors.co2_ppm:.0f} ppm")

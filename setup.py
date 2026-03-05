@@ -33,7 +33,7 @@ setup(
     # Package Metadata
     # ========================================================================
     name="bio-stabilizing-lunar-spray",
-    version="0.1.0",
+    version="1.6.0",
     author="Don Michael Feeney Jr",
     author_email="dfeen87@gmail.com",  
     description="A dual-purpose surface and agricultural solution for lunar habitats",
