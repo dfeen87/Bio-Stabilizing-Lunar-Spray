@@ -11,7 +11,7 @@ Based on: Bio-Stabilizing Lunar Spray white paper (April 2025)
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 from enum import Enum
 from .utils import NutrientConstants
 
@@ -76,6 +76,11 @@ class NutrientReleaseSimulator:
             initial_ph: Starting pH after curing
             water_availability: Water factor (0-1), affects dissolution rates
         """
+        if not 0 <= initial_ph <= 14:
+            raise ValueError(f"Initial pH {initial_ph} outside valid range [0, 14]")
+        if water_availability < 0.0:
+            raise ValueError(f"Water availability {water_availability} cannot be negative")
+
         self.initial_ph = initial_ph
         self.water_factor = water_availability
 
@@ -141,9 +146,7 @@ class NutrientReleaseSimulator:
             Magnesium concentration in ppm
         """
         mg_released = self._magnesium_release_total(np.array(day))
-        return float(
-            np.minimum(mg_released, NutrientConstants.MG_MAX) * self.water_factor
-        )
+        return float(np.minimum(mg_released, NutrientConstants.MG_MAX) * self.water_factor)
 
     def calculate_sulfur_release(self, day: float) -> float:
         """
@@ -180,14 +183,8 @@ class NutrientReleaseSimulator:
         return 1 / (1 + np.exp(exponent))
 
     def _nitrogen_release_total(self, days: np.ndarray) -> np.ndarray:
-        fast_phase = (
-            np.minimum(days, NutrientConstants.N_TRANSITION_DAY)
-            * NutrientConstants.N_FAST_RATE
-        )
-        slow_phase = (
-            np.maximum(days - NutrientConstants.N_TRANSITION_DAY, 0)
-            * NutrientConstants.N_SLOW_RATE
-        )
+        fast_phase = np.minimum(days, NutrientConstants.N_TRANSITION_DAY) * NutrientConstants.N_FAST_RATE
+        slow_phase = np.maximum(days - NutrientConstants.N_TRANSITION_DAY, 0) * NutrientConstants.N_SLOW_RATE
         return fast_phase + slow_phase
 
     def _phosphorus_release_total(self, days: np.ndarray) -> np.ndarray:
@@ -197,26 +194,21 @@ class NutrientReleaseSimulator:
         return NutrientConstants.P_MAX * release_fraction + urea_p_contribution
 
     def _magnesium_release_total(self, days: np.ndarray) -> np.ndarray:
-        mg_released = (
-            np.maximum(days - NutrientConstants.MG_START_DAY, 0)
-            * NutrientConstants.MG_RATE
-        )
+        mg_released = np.maximum(days - NutrientConstants.MG_START_DAY, 0) * NutrientConstants.MG_RATE
         return np.minimum(mg_released, NutrientConstants.MG_MAX)
 
     def _ph_values(self, days: np.ndarray) -> np.ndarray:
-        final_ph = 6.5
-        decay_rate = 0.08
+        final_ph = NutrientConstants.FINAL_PH
+        decay_rate = NutrientConstants.PH_DECAY_RATE
         return final_ph + (self.initial_ph - final_ph) * np.exp(-decay_rate * days)
 
     def _porosity_values(self, days: np.ndarray) -> np.ndarray:
-        initial_porosity = 0.15
-        final_porosity = 0.45
-        transition_day = 25
-        rate = 0.12
+        initial_porosity = NutrientConstants.INITIAL_POROSITY
+        final_porosity = NutrientConstants.FINAL_POROSITY
+        transition_day = NutrientConstants.POROSITY_TRANSITION_DAY
+        rate = NutrientConstants.POROSITY_RATE
         increase_fraction = 1 / (1 + np.exp(-rate * (days - transition_day)))
-        return (
-            initial_porosity + (final_porosity - initial_porosity) * increase_fraction
-        )
+        return initial_porosity + (final_porosity - initial_porosity) * increase_fraction
 
     def calculate_ph(self, day: float) -> float:
         """
@@ -234,8 +226,8 @@ class NutrientReleaseSimulator:
             pH value
         """
         # Exponential decay from alkaline to neutral
-        final_ph = 6.5
-        decay_rate = 0.08
+        final_ph = NutrientConstants.FINAL_PH
+        decay_rate = NutrientConstants.PH_DECAY_RATE
 
         ph = final_ph + (self.initial_ph - final_ph) * np.exp(-decay_rate * day)
 
@@ -253,23 +245,19 @@ class NutrientReleaseSimulator:
         Returns:
             Porosity fraction (0-1)
         """
-        initial_porosity = 0.15  # Hardened geopolymer
-        final_porosity = 0.45  # Degraded, root-permeable
+        initial_porosity = NutrientConstants.INITIAL_POROSITY  # Hardened geopolymer
+        final_porosity = NutrientConstants.FINAL_POROSITY  # Degraded, root-permeable
 
         # Sigmoid increase following geopolymer breakdown
-        transition_day = 25
-        rate = 0.12
+        transition_day = NutrientConstants.POROSITY_TRANSITION_DAY
+        rate = NutrientConstants.POROSITY_RATE
 
         increase_fraction = 1 / (1 + np.exp(-rate * (day - transition_day)))
-        porosity = (
-            initial_porosity + (final_porosity - initial_porosity) * increase_fraction
-        )
+        porosity = initial_porosity + (final_porosity - initial_porosity) * increase_fraction
 
         return porosity
 
-    def simulate_release_cycle(
-        self, duration_days: int = 60, time_points: int = 120
-    ) -> NutrientProfile:
+    def simulate_release_cycle(self, duration_days: int = 60, time_points: int = 120) -> NutrientProfile:
         """
         Simulate complete 60-day nutrient release cycle.
 
@@ -283,15 +271,8 @@ class NutrientReleaseSimulator:
         time = np.linspace(0, duration_days, time_points)
         water_factor = self.water_factor
 
-        potassium = (
-            NutrientConstants.K_MAX
-            * self._potassium_release_fraction(time)
-            * water_factor
-        )
-        nitrogen = (
-            np.minimum(self._nitrogen_release_total(time), NutrientConstants.N_MAX)
-            * water_factor
-        )
+        potassium = NutrientConstants.K_MAX * self._potassium_release_fraction(time) * water_factor
+        nitrogen = np.minimum(self._nitrogen_release_total(time), NutrientConstants.N_MAX) * water_factor
         phosphorus = self._phosphorus_release_total(time) * water_factor
         magnesium = self._magnesium_release_total(time) * water_factor
         sulfur = magnesium * 1.6
@@ -299,9 +280,7 @@ class NutrientReleaseSimulator:
             calcium = np.zeros_like(time)
         else:
             adjusted_p = phosphorus / water_factor
-            calcium = (
-                np.minimum(adjusted_p * 1.2, NutrientConstants.CA_MAX) * water_factor
-            )
+            calcium = np.minimum(adjusted_p * 1.2, NutrientConstants.CA_MAX) * water_factor
 
         concentrations = {
             Nutrient.POTASSIUM: potassium,
@@ -353,18 +332,9 @@ class NutrientReleaseSimulator:
         required_consecutive = 3 if strict_thresholds else 1
 
         for i, day in enumerate(profile.time_days):
-            n_ok = (
-                requirements.nitrogen_min
-                <= profile.concentrations[Nutrient.NITROGEN][i]
-            )
-            p_ok = (
-                profile.concentrations[Nutrient.PHOSPHORUS][i]
-                >= requirements.phosphorus_min
-            )
-            k_ok = (
-                profile.concentrations[Nutrient.POTASSIUM][i]
-                >= requirements.potassium_min
-            )
+            n_ok = requirements.nitrogen_min <= profile.concentrations[Nutrient.NITROGEN][i]
+            p_ok = profile.concentrations[Nutrient.PHOSPHORUS][i] >= requirements.phosphorus_min
+            k_ok = profile.concentrations[Nutrient.POTASSIUM][i] >= requirements.potassium_min
             ph_ok = requirements.ph_min <= profile.ph_values[i] <= requirements.ph_max
 
             day_value = int(day)
@@ -436,15 +406,9 @@ class NutrientReleaseSimulator:
         )
 
         if requirements:
-            ax1.axhline(
-                y=requirements.nitrogen_min, color="g", linestyle="--", alpha=0.3
-            )
-            ax1.axhline(
-                y=requirements.phosphorus_min, color="purple", linestyle="--", alpha=0.3
-            )
-            ax1.axhline(
-                y=requirements.potassium_min, color="b", linestyle="--", alpha=0.3
-            )
+            ax1.axhline(y=requirements.nitrogen_min, color="g", linestyle="--", alpha=0.3)
+            ax1.axhline(y=requirements.phosphorus_min, color="purple", linestyle="--", alpha=0.3)
+            ax1.axhline(y=requirements.potassium_min, color="b", linestyle="--", alpha=0.3)
 
         ax1.set_xlabel("Days")
         ax1.set_ylabel("Concentration (ppm)")
@@ -511,16 +475,12 @@ class NutrientReleaseSimulator:
 
         # Substrate porosity
         ax4 = axes[1, 1]
-        ax4.plot(
-            profile.time_days, profile.substrate_porosity * 100, "brown", linewidth=2
-        )
+        ax4.plot(profile.time_days, profile.substrate_porosity * 100, "brown", linewidth=2)
         ax4.set_xlabel("Days")
         ax4.set_ylabel("Porosity (%)")
         ax4.set_title("Substrate Porosity Development")
         ax4.grid(True, alpha=0.3)
-        ax4.axhline(
-            y=30, color="g", linestyle="--", alpha=0.5, label="Root-permeable threshold"
-        )
+        ax4.axhline(y=30, color="g", linestyle="--", alpha=0.5, label="Root-permeable threshold")
         ax4.legend()
 
         plt.tight_layout()
@@ -546,21 +506,21 @@ def run_example():
     requirements = PlantRequirements()
     ready_day, status = sim.check_plant_readiness(profile, requirements)
 
-    print(f"\nSubstrate Readiness Analysis:")
+    print("\nSubstrate Readiness Analysis:")
     print("-" * 70)
     if ready_day:
         print(f"  ✓ Substrate ready for planting: Day {ready_day}")
     else:
-        print(f"  ✗ Substrate not ready within 60 days")
+        print("  ✗ Substrate not ready within 60 days")
 
-    print(f"\n  Component readiness:")
+    print("\n  Component readiness:")
     print(f"    Nitrogen sufficient:  Day {status['n_sufficient']}")
     print(f"    Phosphorus sufficient: Day {status['p_sufficient']}")
     print(f"    Potassium sufficient:  Day {status['k_sufficient']}")
     print(f"    pH acceptable:         Day {status['ph_acceptable']}")
 
     # Print nutrient levels at key timepoints
-    print(f"\nNutrient Concentrations at Key Timepoints:")
+    print("\nNutrient Concentrations at Key Timepoints:")
     print("-" * 70)
 
     for day_idx in [0, 10, 20, 30, 45, 60]:

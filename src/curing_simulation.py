@@ -11,7 +11,7 @@ Based on: Bio-Stabilizing Lunar Spray white paper (April 2025)
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import List, Optional
 from enum import Enum
 from .utils import CuringConstants, PhysicalConstants
 
@@ -59,9 +59,7 @@ class CuringSimulator:
     - Regolith composition effects
     """
 
-    def __init__(
-        self, uv_assisted: bool = False, regolith: Optional[RegolithProperties] = None
-    ):
+    def __init__(self, uv_assisted: bool = False, regolith: Optional[RegolithProperties] = None):
         """
         Initialize curing simulator.
 
@@ -88,9 +86,7 @@ class CuringSimulator:
         T_kelvin = temperature_c + 273.15
         T_ref = 273.15  # 0°C reference
 
-        exponent = (
-            -(CuringConstants.ACTIVATION_ENERGY * 1000) / PhysicalConstants.GAS_CONSTANT
-        )
+        exponent = -(CuringConstants.ACTIVATION_ENERGY * 1000) / PhysicalConstants.GAS_CONSTANT
         factor = np.exp(exponent * (1 / T_kelvin - 1 / T_ref))
 
         return factor
@@ -121,7 +117,7 @@ class CuringSimulator:
         cure_time /= al_factor
 
         # Clamp cure time to keep extreme cold reactions progressing
-        return min(max(cure_time, 2.0), CuringConstants.MAX_CURE_TIME)
+        return min(max(cure_time, CuringConstants.MIN_CURE_TIME), CuringConstants.MAX_CURE_TIME)
 
     def calculate_bond_strength(self, time_min: float, temperature_c: float) -> float:
         """
@@ -138,11 +134,10 @@ class CuringSimulator:
 
         # Sigmoidal strength development
         # Strength develops as geopolymer network forms
-        curve_steepness = 5
         # Avoid division by zero if cure_time is 0 (unlikely but safe)
         safe_cure_time = max(cure_time, 1e-6)
         normalized_time = (time_min - safe_cure_time) / safe_cure_time
-        cure_fraction = 1 / (1 + np.exp(-curve_steepness * normalized_time))
+        cure_fraction = 1 / (1 + np.exp(-CuringConstants.SIGMOID_STEEPNESS * normalized_time))
 
         # Base strength from geopolymer network
         base_strength = CuringConstants.MAX_BOND_STRENGTH * cure_fraction
@@ -172,9 +167,7 @@ class CuringSimulator:
         else:
             return CuringPhase.MATURE
 
-    def simulate_curing(
-        self, temperature_c: float, duration_min: float = 30.0, time_steps: int = 200
-    ) -> CuringProfile:
+    def simulate_curing(self, temperature_c: float, duration_min: float = 30.0, time_steps: int = 200) -> CuringProfile:
         """
         Simulate curing process over time.
 
@@ -192,17 +185,14 @@ class CuringSimulator:
         cure_time = self.calculate_cure_time(temperature_c)
 
         # Sigmoidal cure fraction development
-        curve_steepness = 5
         # Avoid division by zero
         safe_cure_time = max(cure_time, 1e-6)
         normalized_time = (time - safe_cure_time) / safe_cure_time
-        cure_fraction = 1 / (1 + np.exp(-curve_steepness * normalized_time))
+        cure_fraction = 1 / (1 + np.exp(-CuringConstants.SIGMOID_STEEPNESS * normalized_time))
 
         # Bond strength follows cure fraction with temperature correction
         temp_strength_factor = 1.0 - 0.001 * max(0, -temperature_c - 50)
-        bond_strength = (
-            CuringConstants.MAX_BOND_STRENGTH * cure_fraction * temp_strength_factor
-        )
+        bond_strength = CuringConstants.MAX_BOND_STRENGTH * cure_fraction * temp_strength_factor
 
         # Determine phase at each time point
         phase = np.array([self.get_curing_phase(cf) for cf in cure_fraction])
@@ -216,9 +206,7 @@ class CuringSimulator:
             phase=phase,
         )
 
-    def compare_temperatures(
-        self, temps: List[float], duration_min: float = 30.0
-    ) -> List[CuringProfile]:
+    def compare_temperatures(self, temps: List[float], duration_min: float = 30.0) -> List[CuringProfile]:
         """
         Compare curing at different temperatures.
 
@@ -246,10 +234,7 @@ class CuringSimulator:
             save_path: Optional path to save figure
         """
         if labels is None:
-            labels = [
-                f"{p.temperature_c}°C" + (" (UV)" if p.uv_assisted else "")
-                for p in profiles
-            ]
+            labels = [f"{p.temperature_c}°C" + (" (UV)" if p.uv_assisted else "") for p in profiles]
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
@@ -315,9 +300,7 @@ def generate_cure_time_chart():
     uv_times = np.array([uv_assisted.calculate_cure_time(t) for t in temperatures])
 
     plt.figure(figsize=(10, 6))
-    plt.plot(
-        temperatures, standard_times, "b-", linewidth=2, label="Standard formulation"
-    )
+    plt.plot(temperatures, standard_times, "b-", linewidth=2, label="Standard formulation")
     plt.plot(temperatures, uv_times, "r-", linewidth=2, label="UV-assisted formulation")
     plt.xlabel("Temperature (°C)")
     plt.ylabel("Cure Time (minutes)")
@@ -359,24 +342,16 @@ def analyze_phase_transitions():
 
             if len(setting_indices) > 0:
                 setting_end_time = profile.time[setting_indices[0]]
-                print(
-                    f"  Primary setting:       {initial_end_time:.1f} - {setting_end_time:.1f} min"
-                )
+                print(f"  Primary setting:       {initial_end_time:.1f} - {setting_end_time:.1f} min")
 
                 if len(hardening_indices) > 0:
                     hardening_end_time = profile.time[hardening_indices[0]]
-                    print(
-                        f"  Strength development:  {setting_end_time:.1f} - {hardening_end_time:.1f} min"
-                    )
+                    print(f"  Strength development:  {setting_end_time:.1f} - {hardening_end_time:.1f} min")
                     print(f"  Mature (95%+):         {hardening_end_time:.1f} min+")
                 else:
-                    print(
-                        f"  Strength development:  {setting_end_time:.1f} - (not completed)"
-                    )
+                    print(f"  Strength development:  {setting_end_time:.1f} - (not completed)")
             else:
-                print(
-                    f"  Primary setting:       {initial_end_time:.1f} - (not completed)"
-                )
+                print(f"  Primary setting:       {initial_end_time:.1f} - (not completed)")
         else:
             print("  Initial gelation:      (not started)")
 
@@ -409,13 +384,10 @@ def run_example():
 
     # Detailed simulation at 0°C
     profile_std = standard.simulate_curing(0, duration_min=30)
-    profile_uv = uv_sim.simulate_curing(0, duration_min=30)
 
-    print(f"\nDetailed Results at 0°C (Standard):")
+    print("\nDetailed Results at 0°C (Standard):")
     print(f"  Cure time: {standard.calculate_cure_time(0):.1f} min")
-    print(
-        f"  Strength at 15 min: {profile_std.bond_strength_mpa[np.argmax(profile_std.time >= 15)]:.2f} MPa"
-    )
+    print(f"  Strength at 15 min: {profile_std.bond_strength_mpa[np.argmax(profile_std.time >= 15)]:.2f} MPa")
     print(f"  Strength at 30 min: {profile_std.bond_strength_mpa[-1]:.2f} MPa")
 
     # Compare multiple temperatures

@@ -11,9 +11,8 @@ Based on: Bio-Stabilizing Lunar Spray white paper (April 2025)
 import numpy as np
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union, Any
+from typing import Dict, List, Union, Any
 from dataclasses import dataclass, asdict
-from datetime import datetime
 import warnings
 
 # ============================================================================
@@ -82,6 +81,9 @@ class SprayConstants:
     BASE_VISCOSITY = 3000.0  # cP at 20°C
     DEFAULT_PRESSURE = 25.0  # PSI
     DEFAULT_NOZZLE_DIAMETER = 2.0  # mm
+    BASE_THICKNESS_M = 0.00015  # 0.15mm target thickness
+    LOGISTIC_GROWTH_RATE = 0.3  # Controls expansion speed
+    LOGISTIC_INFLECTION_TIME = 10.0  # When expansion is at 50%
 
 
 class CuringConstants:
@@ -92,6 +94,8 @@ class CuringConstants:
     UV_ACCELERATION = 0.30  # 30% faster with UV
     ACTIVATION_ENERGY = 45.0  # kJ/mol
     MAX_CURE_TIME = 90.0  # minutes
+    SIGMOID_STEEPNESS = 5.0
+    MIN_CURE_TIME = 2.0  # minutes
 
 
 class NutrientConstants:
@@ -117,6 +121,37 @@ class NutrientConstants:
 
     MG_START_DAY = 10
     MG_RATE = 12
+
+    # pH and porosity evolution
+    FINAL_PH = 6.5
+    PH_DECAY_RATE = 0.08
+    INITIAL_POROSITY = 0.15
+    FINAL_POROSITY = 0.45
+    POROSITY_TRANSITION_DAY = 25
+    POROSITY_RATE = 0.12
+
+
+class EnvironmentalConstants:
+    """Constants for environmental control simulation."""
+
+    PID_TEMP_KP = 2.0
+    PID_TEMP_KI = 0.1
+    PID_TEMP_KD = 0.5
+
+    PID_HUMIDITY_KP = 1.5
+    PID_HUMIDITY_KI = 0.05
+    PID_HUMIDITY_KD = 0.3
+
+    PID_CO2_KP = 0.5
+    PID_CO2_KI = 0.02
+    PID_CO2_KD = 0.1
+
+    HEATER_MAX_W = 200.0
+    COOLER_W = 60.0
+    LED_MAX_W = 100.0
+    FAN_MAX_W = 40.0
+    FAN_MIN_RPM = 500.0
+    FAN_MAX_RPM = 2000.0
 
 
 # ============================================================================
@@ -193,9 +228,7 @@ class RegolithSample:
 # ============================================================================
 
 
-def sigmoid(
-    x: Union[float, np.ndarray], midpoint: float = 0.0, steepness: float = 1.0
-) -> Union[float, np.ndarray]:
+def sigmoid(x: Union[float, np.ndarray], midpoint: float = 0.0, steepness: float = 1.0) -> Union[float, np.ndarray]:
     """
     Sigmoid (logistic) function.
 
@@ -423,9 +456,7 @@ def dataclass_to_dict(obj: Any) -> Union[Dict, List, Any]:
 # ============================================================================
 
 
-def validate_temperature(
-    temp_c: float, min_temp: float = -273.15, max_temp: float = 200.0
-) -> bool:
+def validate_temperature(temp_c: float, min_temp: float = -273.15, max_temp: float = 200.0) -> bool:
     """
     Validate temperature is within physical bounds.
 
@@ -441,15 +472,11 @@ def validate_temperature(
         ValueError if temperature is invalid
     """
     if not min_temp <= temp_c <= max_temp:
-        raise ValueError(
-            f"Temperature {temp_c}°C outside valid range " f"[{min_temp}, {max_temp}]°C"
-        )
+        raise ValueError(f"Temperature {temp_c}°C outside valid range " f"[{min_temp}, {max_temp}]°C")
     return True
 
 
-def validate_pressure(
-    pressure_psi: float, min_pressure: float = 0.0, max_pressure: float = 100.0
-) -> bool:
+def validate_pressure(pressure_psi: float, min_pressure: float = 0.0, max_pressure: float = 100.0) -> bool:
     """
     Validate pressure is within operational bounds.
 
@@ -465,16 +492,11 @@ def validate_pressure(
         ValueError if pressure is invalid
     """
     if not min_pressure <= pressure_psi <= max_pressure:
-        raise ValueError(
-            f"Pressure {pressure_psi} PSI outside valid range "
-            f"[{min_pressure}, {max_pressure}] PSI"
-        )
+        raise ValueError(f"Pressure {pressure_psi} PSI outside valid range " f"[{min_pressure}, {max_pressure}] PSI")
     return True
 
 
-def validate_percentage(
-    value: float, name: str = "Value", min_val: float = 0.0, max_val: float = 100.0
-) -> bool:
+def validate_percentage(value: float, name: str = "Value", min_val: float = 0.0, max_val: float = 100.0) -> bool:
     """
     Validate percentage is within bounds.
 
@@ -495,9 +517,7 @@ def validate_percentage(
     return True
 
 
-def validate_concentration(
-    conc_ppm: float, nutrient: str = "Nutrient", max_safe: float = 10000.0
-) -> bool:
+def validate_concentration(conc_ppm: float, nutrient: str = "Nutrient", max_safe: float = 10000.0) -> bool:
     """
     Validate nutrient concentration is safe for plants.
 
@@ -513,10 +533,7 @@ def validate_concentration(
         Warning if concentration is high
     """
     if conc_ppm > max_safe:
-        warnings.warn(
-            f"{nutrient} concentration {conc_ppm:.0f} ppm exceeds "
-            f"recommended maximum {max_safe:.0f} ppm"
-        )
+        warnings.warn(f"{nutrient} concentration {conc_ppm:.0f} ppm exceeds " f"recommended maximum {max_safe:.0f} ppm")
     return True
 
 
@@ -580,9 +597,7 @@ def format_duration(seconds: float) -> str:
     return " ".join(parts)
 
 
-def create_progress_bar(
-    current: int, total: int, width: int = 50, prefix: str = "Progress"
-) -> str:
+def create_progress_bar(current: int, total: int, width: int = 50, prefix: str = "Progress") -> str:
     """
     Create text-based progress bar.
 
@@ -647,19 +662,19 @@ def run_utils_demo():
     print("=" * 60)
 
     # Constants
-    print(f"\nPhysical Constants:")
+    print("\nPhysical Constants:")
     print(f"  Moon gravity: {PhysicalConstants.GRAVITY_MOON} m/s²")
     print(f"  Lunar day: {PhysicalConstants.LUNAR_DAY_HOURS} hours")
     print(f"  Max temp: {PhysicalConstants.LUNAR_TEMP_MAX_C}°C")
 
     # Unit conversions
-    print(f"\nUnit Conversions:")
+    print("\nUnit Conversions:")
     print(f"  25 PSI = {UnitConverter.psi_to_pascal(25):.0f} Pa")
     print(f"  500 mL = {UnitConverter.ml_to_cubic_meters(500):.6f} m³")
     print(f"  0°C = {UnitConverter.celsius_to_kelvin(0):.2f} K")
 
     # Math functions
-    print(f"\nMathematical Functions:")
+    print("\nMathematical Functions:")
     print(f"  sigmoid(0) = {sigmoid(0):.3f}")
     print(f"  sigmoid(5) = {sigmoid(5):.3f}")
 
@@ -667,23 +682,21 @@ def run_utils_demo():
     print(f"  Arrhenius factor (0°C, 45 kJ/mol) = {temp_factor:.3f}")
 
     # Regolith sample
-    print(f"\nRegolith Sample (JSC-1A):")
+    print("\nRegolith Sample (JSC-1A):")
     sample = RegolithSample()
     print(f"  Valid composition: {sample.validate()}")
     print(f"  SiO₂: {sample.sio2_percent}%")
     print(f"  Al₂O₃: {sample.al2o3_percent}%")
 
     # Location
-    print(f"\nLunar Location:")
-    location = LunarLocation(
-        name="Shackleton Crater", latitude=-89.9, longitude=0.0, solar_exposure=0.05
-    )
+    print("\nLunar Location:")
+    location = LunarLocation(name="Shackleton Crater", latitude=-89.9, longitude=0.0, solar_exposure=0.05)
     print(f"  Name: {location.name}")
     print(f"  Polar: {location.is_polar()}")
     print(f"  Permanently shadowed: {location.is_permanently_shadowed()}")
 
     # Formatting
-    print(f"\nFormatting:")
+    print("\nFormatting:")
     print(f"  Scientific: {format_scientific(0.00123, 2)}")
     print(f"  Percentage: {format_percentage(0.856, 1)}")
     print(f"  Duration: {format_duration(7385)}")

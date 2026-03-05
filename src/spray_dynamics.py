@@ -9,7 +9,7 @@ Based on: Bio-Stabilizing Lunar Spray white paper (April 2025)
 """
 
 import numpy as np
-from typing import Tuple, Dict, Optional
+from typing import Optional
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from .utils import SprayConstants, PhysicalConstants, validate_pressure
@@ -19,15 +19,11 @@ from .utils import SprayConstants, PhysicalConstants, validate_pressure
 class SprayParameters:
     """Configuration parameters for spray application."""
 
-    pressure_psi: float = (
-        SprayConstants.DEFAULT_PRESSURE
-    )  # Application pressure (20-30 recommended)
+    pressure_psi: float = SprayConstants.DEFAULT_PRESSURE  # Application pressure (20-30 recommended)
     ambient_temp_c: float = 0.0  # Ambient temperature
     surface_slope: float = 0.0  # Surface incline in degrees (0-15)
     viscosity_cp: float = SprayConstants.BASE_VISCOSITY  # Fluid viscosity in centipoise
-    nozzle_diameter_mm: float = (
-        SprayConstants.DEFAULT_NOZZLE_DIAMETER
-    )  # Spray nozzle diameter
+    nozzle_diameter_mm: float = SprayConstants.DEFAULT_NOZZLE_DIAMETER  # Spray nozzle diameter
 
 
 @dataclass
@@ -61,10 +57,16 @@ class SprayDynamics:
             params: SprayParameters object with configuration
 
         Raises:
-            ValueError: If pressure is invalid
+            ValueError: If parameters are invalid
         """
         self.params = params or SprayParameters()
         validate_pressure(self.params.pressure_psi)
+        if self.params.surface_slope < 0 or self.params.surface_slope > 90:
+            raise ValueError(f"Surface slope {self.params.surface_slope} must be between 0 and 90 degrees")
+        if self.params.viscosity_cp <= 0:
+            raise ValueError(f"Viscosity {self.params.viscosity_cp} must be positive")
+        if self.params.nozzle_diameter_mm <= 0:
+            raise ValueError(f"Nozzle diameter {self.params.nozzle_diameter_mm} must be positive")
 
     def calculate_viscosity_factor(self) -> float:
         """
@@ -99,14 +101,11 @@ class SprayDynamics:
 
         # Base coverage model - assumes radial spreading
         # Volume = π * r² * h, solving for r given target thickness ~0.15mm
-        base_thickness_m = 0.00015
         volume_m3 = volume_ml * PhysicalConstants.ML_TO_M3
-        base_radius = np.sqrt(volume_m3 / (np.pi * base_thickness_m))
+        base_radius = np.sqrt(volume_m3 / (np.pi * SprayConstants.BASE_THICKNESS_M))
 
         # Pressure adjustment (higher pressure = better spread)
-        pressure_factor = (
-            self.params.pressure_psi / SprayConstants.DEFAULT_PRESSURE
-        ) ** 0.3
+        pressure_factor = (self.params.pressure_psi / SprayConstants.DEFAULT_PRESSURE) ** 0.3
 
         # Temperature adjustment (affects viscosity)
         visc_factor = self.calculate_viscosity_factor()
@@ -117,13 +116,9 @@ class SprayDynamics:
         slope_factor = 1.0 - 0.4 * np.sin(slope_radians)
 
         # Lunar gravity enhancement (lower gravity = better spread)
-        gravity_factor = np.sqrt(
-            PhysicalConstants.GRAVITY_EARTH / PhysicalConstants.GRAVITY_MOON
-        )
+        gravity_factor = np.sqrt(PhysicalConstants.GRAVITY_EARTH / PhysicalConstants.GRAVITY_MOON)
 
-        return (
-            base_radius * pressure_factor * temp_factor * slope_factor * gravity_factor
-        )
+        return base_radius * pressure_factor * temp_factor * slope_factor * gravity_factor
 
     def simulate_radial_expansion(
         self, volume_ml: float, duration_s: float = 30.0, time_steps: int = 100
@@ -162,10 +157,9 @@ class SprayDynamics:
 
         # Logistic growth model for radius expansion
         # r(t) = r_max / (1 + exp(-k*(t - t0)))
-        growth_rate = 0.3  # Controls expansion speed
-        inflection_time = 10.0  # When expansion is at 50%
-
-        radius = max_radius / (1 + np.exp(-growth_rate * (time - inflection_time)))
+        radius = max_radius / (
+            1 + np.exp(-SprayConstants.LOGISTIC_GROWTH_RATE * (time - SprayConstants.LOGISTIC_INFLECTION_TIME))
+        )
 
         # Thickness decreases as radius increases (conservation of volume)
         # Avoid division by zero at t=0
@@ -197,9 +191,7 @@ class SprayDynamics:
         radius = self.calculate_coverage_radius(volume_ml)
         return np.pi * radius**2
 
-    def calculate_optimal_volume(
-        self, target_area_m2: float, target_thickness_mm: float = 1.0
-    ) -> float:
+    def calculate_optimal_volume(self, target_area_m2: float, target_thickness_mm: float = 1.0) -> float:
         """
         Calculate required spray volume for desired coverage.
 
@@ -216,9 +208,7 @@ class SprayDynamics:
         if target_area_m2 <= 0:
             raise ValueError(f"Target area must be positive, got {target_area_m2}")
         if target_thickness_mm <= 0:
-            raise ValueError(
-                f"Target thickness must be positive, got {target_thickness_mm}"
-            )
+            raise ValueError(f"Target thickness must be positive, got {target_thickness_mm}")
 
         # Convert area to mm²
         target_area_mm2 = target_area_m2 * 1e6
@@ -300,10 +290,7 @@ def compare_conditions():
         sim = SprayDynamics(params)
         results = sim.simulate_radial_expansion(volume)
 
-        print(
-            f"{label:30s} | Radius: {results.max_radius:.2f} m | "
-            f"Area: {results.coverage_area:.2f} m²"
-        )
+        print(f"{label:30s} | Radius: {results.max_radius:.2f} m | " f"Area: {results.coverage_area:.2f} m²")
 
 
 def run_example():
@@ -319,19 +306,17 @@ def run_example():
     volume = 500
     results = sim.simulate_radial_expansion(volume)
 
-    print(f"\nSimulation Parameters:")
+    print("\nSimulation Parameters:")
     print(f"  Pressure: {params.pressure_psi} PSI")
     print(f"  Temperature: {params.ambient_temp_c}°C")
     print(f"  Surface Slope: {params.surface_slope}°")
     print(f"  Volume: {volume} mL")
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Maximum Radius: {results.max_radius:.2f} m")
     print(f"  Coverage Area: {results.coverage_area:.2f} m²")
     print(f"  Final Thickness: {results.thickness[-1]:.2f} mm")
-    print(
-        f"  Time to 90% Expansion: {results.time[np.argmax(results.radius > 0.9*results.max_radius)]:.1f} s"
-    )
+    print(f"  Time to 90% Expansion: {results.time[np.argmax(results.radius > 0.9*results.max_radius)]:.1f} s")
 
     # Calculate optimal volume for target coverage
     target_area = 10.0  # m²
