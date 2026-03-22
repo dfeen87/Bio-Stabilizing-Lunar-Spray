@@ -94,7 +94,7 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         
         # License
-        "License :: OSI Approved :: MIT License",
+        "License :: Non-Commercial",
         
         # Python Versions
         "Programming Language :: Python :: 3",
