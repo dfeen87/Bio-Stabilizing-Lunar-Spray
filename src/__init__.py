@@ -12,7 +12,7 @@ This package provides simulation tools for:
 
 Author: Don Michael Feeney Jr
 Date: January 2026
-License: MIT
+License: Non-Commercial
 
 Usage Examples
 --------------
@@ -34,7 +34,7 @@ Complete mission:
 
 __version__ = "0.1.0"
 __author__ = "Don Michael Feeney Jr"
-__license__ = "MIT"
+__license__ = "Non-Commercial"
 __all__ = [
     # Version info
     "__version__",
