@@ -70,8 +70,8 @@ python -c "from src import SprayDynamics; print('✓ Installation successful!')"
 # Run tests
 pytest tests/ -v
 
-# Check version
-python -c "import src; print(src.__version__)"
+# Check package availability
+python -c "import src.spray_dynamics; print('✓ Package available')"
 ```
 
 ---
@@ -616,6 +616,6 @@ cd package && zip -r ../deployment.zip .
 
 ---
 
-**Version**: 0.1.0  
+**Version**: 1.6.1
 **Last Updated**: 2025  
 **Maintainer**: Don Michael Feeney Jr
