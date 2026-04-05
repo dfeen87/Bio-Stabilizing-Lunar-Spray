@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![Version](https://img.shields.io/badge/version-1.6.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.6.1-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![TRL](https://img.shields.io/badge/TRL-3--4-orange.svg)
 
@@ -475,7 +475,7 @@ We welcome contributions from the space engineering, chemistry, agriculture, and
 
 ## 📄 License
 
-This project is available for **non‑commercial use only** under the terms of the included LICENSE file. Commercial use requires a separate paid license.
+This project uses a hybrid licensing model. It is available for **non‑commercial use** (academic, personal, educational) under the terms of the included LICENSE file. **Commercial use** (production, enterprise, for-profit integration) requires a separate paid commercial license.
 
 ---
 
