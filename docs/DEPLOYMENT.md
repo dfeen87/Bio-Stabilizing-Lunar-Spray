@@ -616,6 +616,6 @@ cd package && zip -r ../deployment.zip .
 
 ---
 
-**Version**: 1.6.1
+**Version**: 1.7.0
 **Last Updated**: 2025  
 **Maintainer**: Don Michael Feeney Jr
