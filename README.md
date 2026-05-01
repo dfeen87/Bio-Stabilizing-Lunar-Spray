@@ -475,7 +475,7 @@ We welcome contributions from the space engineering, chemistry, agriculture, and
 
 ## 📄 License
 
-This project uses a hybrid licensing model. It is available for **non‑commercial use** (academic, personal, educational) under the terms of the included LICENSE file. **Commercial use** (production, enterprise, for-profit integration) requires a separate paid commercial license.
+This project is now **100% open-source** under the **MIT License**. You are free to use, modify, and distribute this work in academic, personal, educational, and commercial settings, subject to the terms in the LICENSE file.
 
 ---
 
@@ -497,6 +497,11 @@ Quality & Systems Engineer | AI Safety, Validation & Regulated Systems
 
 - **Email**: [dfeen87@example.com]
 - **Project Issues**: [GitHub Issues](https://github.com/dfeen87/bio-stabilizing-lunar-spray/issues)
+---
+
+## Enterprise Consulting & Integration
+This architecture is fully open-source under the MIT License. If your organization requires custom scaling, proprietary integration, or dedicated technical consulting to deploy these models at an enterprise level, please reach out at: dfeen87@gmail.com
+
 ---
 
 ## 🔮 Future Work
