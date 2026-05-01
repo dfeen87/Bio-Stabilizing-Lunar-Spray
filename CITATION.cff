@@ -6,5 +6,5 @@ date-released: 2026-01-21
 authors:
   - family-names: Feeney
     given-names: Don Michael
-license: non-commercial
+license: MIT
 repository-code: "https://github.com/dfeen87/bio-stabilizing-lunar-spray"
