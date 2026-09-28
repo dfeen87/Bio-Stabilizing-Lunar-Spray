@@ -161,11 +161,16 @@ class TestSprayDynamics:
         # Calculate volume from final radius and thickness
         # Volume = π * r² * h
         final_volume = (
-            np.pi * results.radius[-1] ** 2 * results.thickness[-1] / 1000
-        )  # Convert to m³ then mL
+            np.pi * results.radius[-1] ** 2 * results.thickness[-1] * 1000
+        )  # Convert m³ to mL
 
         # Should be within 20% (due to spreading model simplifications)
         assert abs(final_volume - volume_ml) / volume_ml < 0.2
+
+    def test_thickness_is_reported_in_millimeters(self, simulator):
+        """Thickness uses the documented millimeter unit."""
+        results = simulator.simulate_radial_expansion(volume_ml=500)
+        assert results.thickness[-1] < 1.0
 
     def test_coverage_area_calculation(self, simulator):
         """Test coverage area matches radius calculation."""

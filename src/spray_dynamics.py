@@ -147,8 +147,8 @@ class SprayDynamics:
             raise ValueError(f"Volume must be positive, got {volume_ml}")
         if duration_s <= 0:
             raise ValueError(f"Duration must be positive, got {duration_s}")
-        if time_steps <= 0:
-            raise ValueError(f"Time steps must be positive, got {time_steps}")
+        if not isinstance(time_steps, (int, np.integer)) or time_steps < 2:
+            raise ValueError(f"Time steps must be an integer of at least 2, got {time_steps}")
 
         max_radius = self.calculate_coverage_radius(volume_ml)
 
@@ -165,7 +165,8 @@ class SprayDynamics:
         # Avoid division by zero at t=0
         min_radius = 1e-4
         safe_radius = np.maximum(radius, min_radius)
-        thickness = (volume_ml * 1000.0) / (np.pi * safe_radius**2)
+        # Convert mL to m³, calculate thickness in metres, then report mm.
+        thickness = (volume_ml * PhysicalConstants.ML_TO_M3) / (np.pi * safe_radius**2) * 1000.0
 
         coverage_area = np.pi * max_radius**2
 

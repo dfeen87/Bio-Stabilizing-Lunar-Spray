@@ -421,7 +421,10 @@ class AIEnvironmentalController:
         # Emergency mode if critical alerts
         if any(alert[0] == AlertLevel.EMERGENCY for alert in self.state.alerts):
             self.state.mode = ControlMode.EMERGENCY
-            return self._emergency_response()
+            actions = self._emergency_response()
+            self.state.actions = actions
+            self.state.energy_consumption_w = EnvironmentalConstants.FAN_MAX_W
+            return actions
 
         # Calculate control outputs
         heater, cooler = self.calculate_temperature_control(sensors.temperature_c, setpoints.temperature_c, dt)
@@ -486,6 +489,9 @@ class AIEnvironmentalController:
         Args:
             dt: Time step in seconds
         """
+        if not np.isfinite(dt) or dt <= 0:
+            raise ValueError(f"Time step must be finite and positive, got {dt}")
+
         # Update controls
         actions = self.update_control(dt)
 
@@ -532,6 +538,11 @@ class AIEnvironmentalController:
             duration_hours: Simulation duration
             dt: Time step in seconds
         """
+        if not np.isfinite(duration_hours) or duration_hours < 0:
+            raise ValueError(f"Duration must be finite and non-negative, got {duration_hours}")
+        if not np.isfinite(dt) or dt <= 0:
+            raise ValueError(f"Time step must be finite and positive, got {dt}")
+
         steps = int(duration_hours * 3600 / dt)
 
         for _ in range(steps):
