@@ -1137,7 +1137,7 @@ For collaboration inquiries, technical discussions, or research partnerships, pl
 
 ---
 
-**Document Version:** 1.7.0
+**Document Version:** 1.8.0
 **Status:** White Paper  
 **Classification:** Public Release  
 **Distribution:** Unlimited

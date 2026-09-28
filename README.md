@@ -4,7 +4,7 @@
     
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![Version](https://img.shields.io/badge/version-1.7.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.8.0-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![TRL](https://img.shields.io/badge/TRL-3--4-orange.svg)
 
