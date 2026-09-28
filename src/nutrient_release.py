@@ -78,8 +78,8 @@ class NutrientReleaseSimulator:
         """
         if not 0 <= initial_ph <= 14:
             raise ValueError(f"Initial pH {initial_ph} outside valid range [0, 14]")
-        if water_availability < 0.0:
-            raise ValueError(f"Water availability {water_availability} cannot be negative")
+        if not np.isfinite(water_availability) or water_availability < 0.0:
+            raise ValueError(f"Water availability {water_availability} must be finite and non-negative")
 
         self.initial_ph = initial_ph
         self.water_factor = water_availability
@@ -268,6 +268,11 @@ class NutrientReleaseSimulator:
         Returns:
             NutrientProfile with all nutrient concentrations over time
         """
+        if not np.isfinite(duration_days) or duration_days < 0:
+            raise ValueError(f"Duration must be finite and non-negative, got {duration_days}")
+        if not isinstance(time_points, (int, np.integer)) or time_points < 2:
+            raise ValueError(f"Time points must be an integer of at least 2, got {time_points}")
+
         time = np.linspace(0, duration_days, time_points)
         water_factor = self.water_factor
 

@@ -83,6 +83,9 @@ class CuringSimulator:
         Returns:
             Reaction rate multiplier
         """
+        if not np.isfinite(temperature_c) or temperature_c <= -273.15:
+            raise ValueError(f"Temperature must be finite and above absolute zero, got {temperature_c}")
+
         T_kelvin = temperature_c + 273.15
         T_ref = 273.15  # 0°C reference
 
@@ -130,6 +133,9 @@ class CuringSimulator:
         Returns:
             Bond strength in MPa
         """
+        if not np.isfinite(time_min) or time_min < 0:
+            raise ValueError(f"Elapsed time must be finite and non-negative, got {time_min}")
+
         cure_time = self.calculate_cure_time(temperature_c)
 
         # Sigmoidal strength development
@@ -179,6 +185,11 @@ class CuringSimulator:
         Returns:
             CuringProfile with simulation results
         """
+        if not np.isfinite(duration_min) or duration_min < 0:
+            raise ValueError(f"Duration must be finite and non-negative, got {duration_min}")
+        if not isinstance(time_steps, (int, np.integer)) or time_steps < 2:
+            raise ValueError(f"Time steps must be an integer of at least 2, got {time_steps}")
+
         time = np.linspace(0, duration_min, time_steps)
 
         # Calculate characteristic cure time

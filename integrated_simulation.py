@@ -247,13 +247,15 @@ class IntegratedLunarSpraySimulation:
             print("Simulation Duration: 60 days")
             print(f"Target Crop: {self.params.target_crop}")
             print("\nSubstrate Readiness:")
-            if ready_day:
+            if ready_day is not None:
                 print(f"  ✓ Ready for planting: Day {ready_day}")
             else:
                 print("  ✗ Not ready within 60 days")
 
-            print(f"\nNutrient Levels at Day {ready_day or 30}:")
-            idx = int((ready_day or 30) / 60 * len(profile.time_days))
+            display_day = ready_day if ready_day is not None else 30
+            print(f"\nNutrient Levels at Day {display_day}:")
+            idx = int(np.searchsorted(profile.time_days, display_day, side="left"))
+            idx = min(idx, len(profile.time_days) - 1)
             print(f"  Nitrogen (N):   {profile.concentrations[Nutrient.NITROGEN][idx]:6.1f} ppm")
             print(f"  Phosphorus (P): {profile.concentrations[Nutrient.PHOSPHORUS][idx]:6.1f} ppm")
             print(f"  Potassium (K):  {profile.concentrations[Nutrient.POTASSIUM][idx]:6.1f} ppm")
