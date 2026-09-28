@@ -1,6 +1,6 @@
 # Plugin Architecture
 
-**Version**: 1.7.0
+**Version**: 1.8.0
 **Context**: Bio-Stabilizing Lunar Spray Fictional Simulation
 
 ## Overview
